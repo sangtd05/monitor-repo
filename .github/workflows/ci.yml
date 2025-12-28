@@ -1,41 +1,34 @@
 name: CI
-
 on:
   push:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
-
 jobs:
   validate-docker-compose:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      
       - name: Validate Docker Compose
         run: docker compose -f grafana-prometheus/docker-compose.yml config
-
   validate-prometheus:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      
       - name: Validate Prometheus Config
         run: |
-          docker run --rm -v ${{ github.workspace }}/grafana-prometheus/prometheus:/etc/prometheus \
-            prom/prometheus:latest promtool check config /etc/prometheus/prometheus.yml
-
+          docker run --rm --entrypoint /bin/promtool -v ${{ github.workspace }}/grafana-prometheus/prometheus:/etc/prometheus \
+            prom/prometheus:latest check config /etc/prometheus/prometheus.yml
   validate-alert-rules:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      
       - name: Validate Alert Rules
         run: |
           # We need to list all rule files here or iterate over them
           # Using a loop to check all .rules.yml files
           for file in grafana-prometheus/prometheus/*.rules.yml; do
             echo "Checking $file"
-            docker run --rm -v ${{ github.workspace }}/grafana-prometheus/prometheus:/etc/prometheus \
-              prom/prometheus:latest promtool check rules /etc/prometheus/$(basename "$file")
+            docker run --rm --entrypoint /bin/promtool -v ${{ github.workspace }}/grafana-prometheus/prometheus:/etc/prometheus \
+              prom/prometheus:latest check rules /etc/prometheus/$(basename "$file")
           done
