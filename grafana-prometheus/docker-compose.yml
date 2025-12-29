@@ -79,9 +79,9 @@ services:
     entrypoint: [ "/bin/sh", "-c" ]
     command:
       - |
-        sed "s|\$${TELEGRAM_BOT_TOKEN}|${TELEGRAM_BOT_TOKEN}|g; s|\$${TELEGRAM_CHAT_ID}|${TELEGRAM_CHAT_ID}|g" /etc/alertmanager/alertmanager.yml.template > /etc/alertmanager/alertmanager.yml && \
+        sed "s|\$${TELEGRAM_BOT_TOKEN}|${TELEGRAM_BOT_TOKEN}|g; s|\$${TELEGRAM_CHAT_ID}|${TELEGRAM_CHAT_ID}|g" /etc/alertmanager/alertmanager.yml.template > /tmp/alertmanager.yml && \
         /bin/alertmanager \
-        --config.file=/etc/alertmanager/alertmanager.yml \
+        --config.file=/tmp/alertmanager.yml \
         --storage.path=/alertmanager \
         --web.external-url=${ALERTMANAGER_URL}
     restart: unless-stopped
