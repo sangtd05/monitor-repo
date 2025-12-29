@@ -52,12 +52,9 @@ scrape_configs:
       - timestamp:
           source: timestamp
           format: RFC3339Nano
-      - match:
-          selector: '{job="docker"}'
-          stages:
-            - drop:
-                older_than: 168h
-                drop_counter_reason: "log_too_old"
+      - drop:
+          older_than: 168h
+          drop_counter_reason: "log_too_old"
 
   - job_name: system
     static_configs:

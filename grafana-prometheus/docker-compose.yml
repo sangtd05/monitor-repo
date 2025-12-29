@@ -64,6 +64,7 @@ services:
       - /var/log:/var/log
       - /var/lib/docker:/var/lib/docker
       - /var/run/docker.sock:/var/run/docker.sock
+      - promtail-data:/tmp
     command: -config.file=/etc/promtail/promtail-config.yml
     restart: unless-stopped
     networks:
@@ -160,6 +161,7 @@ volumes:
   tempo-data:
   minio-data:
   alertmanager-data:
+  promtail-data:
 
 
 networks:
