@@ -54,6 +54,8 @@ scrape_configs:
       #   labels: { cluster: "main", service: "mongodb", instance: "vwa" }
       - targets: ["mongodb-exporter-ptit:9216"]
         labels: { cluster: "main", service: "mongodb", instance: "ptit" }
+      - targets: ["10.99.3.67:9216"]
+        labels: { cluster: "test", service: "mongodb", instance: "test" }
 
   - job_name: "postgres-exporter"
     static_configs:
@@ -61,6 +63,8 @@ scrape_configs:
       #   labels: { env: "prod", db_type: "pg", instance: "vwa" }
       - targets: ["postgres-ptit:9187"]
         labels: { env: "prod", db_type: "pg", instance: "ptit" }
+      - targets: ["10.99.3.67:9187"]
+        labels: { env: "test", db_type: "pg", instance: "test" }
 
 alerting:
   alertmanagers:

@@ -52,6 +52,8 @@ services:
       - ./loki:/etc/loki
       - loki-data:/loki
     command: -config.file=/etc/loki/loki-config.yml
+    ports:
+      - "3100:3100"
     restart: unless-stopped
     networks:
       - monitoring
