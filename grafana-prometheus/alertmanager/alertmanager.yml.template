@@ -14,23 +14,25 @@ receivers:
         chat_id: ${TELEGRAM_CHAT_ID}
         parse_mode: "HTML"
         message: |
-          🚨 AIS System Monitor - <b>CẢNH BÁO</b> 🚨
-          <b>Tên cảnh báo:</b> {{ .GroupLabels.alertname }}
-          <b>Mức độ:</b> {{ .CommonLabels.severity }}
-          <b>Trạng thái:</b> {{ if eq .Status "firing" }}🔥 FIRING{{ else }}✅ RESOLVED{{ end }}
-          <b>Chi tiết:</b>
-          {{- range .Alerts -}}
-          📌 <b>Mô tả:</b> {{ .Annotations.description }}
-          🕐 <b>Thời gian:</b> {{ (.StartsAt.Add 25200e9).Format "02/01/2006 15:04:05" }}
-          {{- if .Annotations.value }}
-          📊 <b>Thời gian chạy:</b> {{ .Annotations.value }}
+          {{ if eq .Status "firing" }}🔴 <b>CẢNH BÁO</b>{{ else }}✅ <b>ĐÃ GIẢI QUYẾT</b>{{ end }}
+          
+          <b>{{ .GroupLabels.alertname }}</b>
+          {{ if .CommonLabels.severity }}━━━━━━━━━━━━━━━━━━━━
+          📊 Mức độ: <code>{{ .CommonLabels.severity }}</code>{{ end }}
+          {{- range .Alerts }}
+          
+          {{ .Annotations.description }}
+          {{- if .Annotations.summary }}
+          � {{ .Annotations.summary }}
           {{- end }}
           {{- if .Labels.instance }}
-          🖥️ <b>Máy chủ:</b> {{ .Labels.instance }}
+          🖥 Server: <code>{{ .Labels.instance }}</code>
           {{- end }}
+          {{- if .Annotations.value }}
+          📈 Giá trị: <code>{{ .Annotations.value }}</code>
           {{- end }}
-          <b>Hành động:</b>
-          ⚠️ Vui lòng kiểm tra và xử lý ngay lập tức!
+          🕐 {{ (.StartsAt.Add 25200e9).Format "15:04:05 - 02/01/2006" }}
+          {{- end }}
 inhibit_rules:
   - source_match:
       severity: "critical"
