@@ -88,17 +88,17 @@ services:
     networks:
       - monitoring
 
-  mongodb-exporter-vwa:
-    image: percona/mongodb_exporter:0.40
-    container_name: mongodb-exporter-vwa
-    command:
-      - "--mongodb.uri=${MONGODB_URI_VWA}"
-      - "--collect-all"
-      - "--compatible-mode"
-      - "--collector.replicasetstatus"
-    networks:
-      - monitoring
-    restart: unless-stopped
+  # mongodb-exporter-vwa:
+  #   image: percona/mongodb_exporter:0.40
+  #   container_name: mongodb-exporter-vwa
+  #   command:
+  #     - "--mongodb.uri=${MONGODB_URI_VWA}"
+  #     - "--collect-all"
+  #     - "--compatible-mode"
+  #     - "--collector.replicasetstatus"
+  #   networks:
+  #     - monitoring
+  #   restart: unless-stopped
 
   mongodb-exporter-ptit:
     image: percona/mongodb_exporter:0.40
@@ -112,16 +112,16 @@ services:
       - monitoring
     restart: unless-stopped
 
-  postgres-vwa:
-    image: bitnami/postgres-exporter
-    container_name: postgres-exporter-vwa
-    environment:
-      - DATA_SOURCE_NAME=${POSTGRES_DSN_VWA}
-      - PG_EXPORTER_AUTO_DISCOVER_DATABASES=true
-      - PG_EXPORTER_EXCLUDE_DATABASES=template0,template1
-    networks:
-      - monitoring
-    restart: unless-stopped
+  # postgres-vwa:
+  #   image: bitnami/postgres-exporter
+  #   container_name: postgres-exporter-vwa
+  #   environment:
+  #     - DATA_SOURCE_NAME=${POSTGRES_DSN_VWA}
+  #     - PG_EXPORTER_AUTO_DISCOVER_DATABASES=true
+  #     - PG_EXPORTER_EXCLUDE_DATABASES=template0,template1
+  #   networks:
+  #     - monitoring
+  #   restart: unless-stopped
 
   postgres-ptit:
     image: bitnami/postgres-exporter
