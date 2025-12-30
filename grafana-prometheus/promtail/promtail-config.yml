@@ -57,12 +57,18 @@ scrape_configs:
 
     pipeline_stages:
       - docker: {}
-      - timestamp:
-          source: timestamp
-          format: RFC3339Nano
+      - match:
+          selector: '{service_name="unknown_service"}'
+          stages:
+            - drop:
+                expression: ".*"
+                drop_counter_reason: "unknown_service_drop"
       - drop:
-          older_than: 12h
-          drop_counter_reason: "log_too_old"
+          expression: ".*\\x00.*"
+          drop_counter_reason: "corrupted_log"
+      # - drop:
+      #     older_than: 168h
+      #     drop_counter_reason: "log_too_old"
 
   - job_name: system
     static_configs:
