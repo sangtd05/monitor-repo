@@ -27,6 +27,9 @@ scrape_configs:
           database:
           application:
           level:
+      - template:
+          source: application
+          template: '{{ if eq .Value "[unknown]" }}undefined{{ else }}{{ .Value }}{{ end }}'
       - timestamp:
           source: timestamp
           format: '2006-01-02 15:04:05 MST'
