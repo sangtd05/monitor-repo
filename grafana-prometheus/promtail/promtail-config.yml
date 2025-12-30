@@ -57,7 +57,7 @@ scrape_configs:
 
     pipeline_stages:
       - drop:
-          expression: ".*\\x00.*"
+          expression: ".*[\\x00-\\x08\\x0B\\x0C\\x0E-\\x1F].*"
           drop_counter_reason: "corrupted_log"
       - docker: {}
       - drop:
