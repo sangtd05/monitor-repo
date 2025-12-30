@@ -15,9 +15,9 @@ scrape_configs:
       - host: unix:///var/run/docker.sock
         refresh_interval: 5s
     relabel_configs:
-      - source_labels: ["__meta_docker_container_name"]
-        regex: ".*(loki|influxdb).*"
-        action: drop
+      # - source_labels: ["__meta_docker_container_name"]
+      #   regex: ".*(loki|influxdb|sonarqube).*"
+      #   action: drop
       - source_labels: ["__meta_docker_container_id"]
         target_label: "__path__"
         replacement: "/var/lib/docker/containers/$1/$1-json.log"
@@ -57,18 +57,18 @@ scrape_configs:
 
     pipeline_stages:
       - docker: {}
-      - match:
-          selector: '{service_name="unknown_service"}'
-          stages:
-            - drop:
-                expression: ".*"
-                drop_counter_reason: "unknown_service_drop"
-      - drop:
-          expression: ".*\\x00.*"
-          drop_counter_reason: "corrupted_log"
+      # - match:
+      #     selector: '{service_name="unknown_service"}'
+      #     stages:
+      #       - drop:
+      #           expression: ".*"
+      #           drop_counter_reason: "unknown_service_drop"
       # - drop:
-      #     older_than: 168h
-      #     drop_counter_reason: "log_too_old"
+      #     expression: ".*\\x00.*"
+      #     drop_counter_reason: "corrupted_log"
+      - drop:
+          older_than: 24h
+          drop_counter_reason: "log_too_old"
 
   - job_name: system
     static_configs:
@@ -79,11 +79,11 @@ scrape_configs:
           service: varlogs
           service_name: varlogs
           __path__: /var/log/*.log
+    relabel_configs:
+      - source_labels: [__path__]
+        regex: '.*(apport|dpkg|ubuntu-advantage|vmware|alternatives|bootstrap|cloud-init).*\.log'
+        action: drop
     pipeline_stages:
-      - drop:
-          source: filename
-          expression: '.*(apport|dpkg|ubuntu-advantage|vmware|alternatives|bootstrap|cloud-init).*\.log'
-          drop_counter_reason: "system_logs_filtered"
       - regex:
           expression: '^(?P<timestamp>\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z)\s+(?P<level>\w+)\s+(?P<message>.*)'
       - labels:
@@ -100,11 +100,13 @@ scrape_configs:
       - source_labels: ["__meta_docker_container_name"]
         regex: ".*exporter.*"
         action: keep
+      - source_labels: ["__meta_docker_container_id"]
+        target_label: "__path__"
+        replacement: "/var/lib/docker/containers/$1/$1-json.log"
       - source_labels: ["__meta_docker_container_name"]
         regex: "/(.*)"
         target_label: "exporter_name"
-      - source_labels:
-          ["__meta_docker_container_label_com_docker_compose_service"]
+      - source_labels: ["__meta_docker_container_label_com_docker_compose_service"]
         target_label: "service"
     pipeline_stages:
       - docker: {}
