@@ -23,7 +23,6 @@ scrape_configs:
           user:
           database:
           application:
-          client:
           level:
       - timestamp:
           source: timestamp
@@ -52,7 +51,6 @@ scrape_configs:
       - labels:
           severity:
           component:
-          context:
       - timestamp:
           source: timestamp
           format: RFC3339

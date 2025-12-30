@@ -35,6 +35,14 @@ scrape_configs:
         replacement: "$1"
       - source_labels: ["service"]
         target_label: "service_name"
+      - source_labels: ["service_name"]
+        regex: "^$"
+        target_label: "service_name"
+        replacement: "unknown_service"
+      - source_labels: ["service_name", "container"]
+        regex: "unknown_service;(.+)"
+        target_label: "service_name"
+        replacement: "$1"
       - source_labels: ["__meta_docker_container_log_stream"]
         target_label: "logstream"
       - source_labels:
