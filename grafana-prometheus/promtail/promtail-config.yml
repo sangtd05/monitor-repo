@@ -61,7 +61,7 @@ scrape_configs:
           source: timestamp
           format: RFC3339Nano
       - drop:
-          older_than: 168h
+          older_than: 12h
           drop_counter_reason: "log_too_old"
 
   - job_name: system
