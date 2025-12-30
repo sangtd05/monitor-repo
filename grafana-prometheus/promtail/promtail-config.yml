@@ -16,7 +16,7 @@ scrape_configs:
         refresh_interval: 5s
     relabel_configs:
       - source_labels: ["__meta_docker_container_name"]
-        regex: ".*loki.*"
+        regex: ".*(loki|influxdb).*"
         action: drop
       - source_labels: ["__meta_docker_container_id"]
         target_label: "__path__"
