@@ -12,6 +12,7 @@ scrape_configs:
           - localhost
         labels:
           job: postgresql
+          service_name: postgresql-log-test
           db_type: postgres
           host: 10.99.3.67
           instance: test
@@ -21,7 +22,7 @@ scrape_configs:
           firstline: '^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}'
           max_wait_time: 3s
       - regex:
-          expression: '^(?P<timestamp>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}(?:\.\d+)? \w+) \[(?P<pid>\d+)\]: \[(?P<line_num>\d+-\d+)\] user=(?P<user>[^,]*),db=(?P<database>[^,]*),app=(?P<application>[^,]*),client=(?P<client>[^ ]*) (?P<level>\w+):  (?P<message>.*)'
+          expression: '^(?P<timestamp>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}(?:\.\d+)? \w+) \[(?P<pid>\d+)\]: \[(?P<line_num>\d+-\d+)\] user=(?P<user>[^,]*),db=(?P<database>[^,]*),app=(?P<application>[^,]*),client=(?P<client>[^ ]*) (?P<level>\w+):\s+(?P<message>.*)'
       - labels:
           user:
           database:
@@ -41,6 +42,7 @@ scrape_configs:
           - localhost
         labels:
           job: mongodb
+          service_name: mongodb-log-test
           db_type: mongodb
           host: 10.99.3.67
           instance: test
