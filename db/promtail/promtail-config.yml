@@ -17,6 +17,9 @@ scrape_configs:
           instance: test
           __path__: /var/log/postgres/**/*.log
     pipeline_stages:
+      - multiline:
+          firstline: '^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}'
+          max_wait_time: 3s
       - regex:
           expression: '^(?P<timestamp>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}(?:\.\d+)? \w+) \[(?P<pid>\d+)\]: \[(?P<line_num>\d+-\d+)\] user=(?P<user>[^,]*),db=(?P<database>[^,]*),app=(?P<application>[^,]*),client=(?P<client>[^ ]*) (?P<level>\w+):  (?P<message>.*)'
       - labels:
@@ -42,7 +45,7 @@ scrape_configs:
     pipeline_stages:
       - json:
           expressions:
-            timestamp: t
+            timestamp: t."$date"
             severity: s
             component: c
             context: ctx
