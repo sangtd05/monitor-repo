@@ -56,16 +56,10 @@ scrape_configs:
         replacement: "docker"
 
     pipeline_stages:
+      - drop:
+          expression: ".*\\x00.*"
+          drop_counter_reason: "corrupted_log"
       - docker: {}
-      # - match:
-      #     selector: '{service_name="unknown_service"}'
-      #     stages:
-      #       - drop:
-      #           expression: ".*"
-      #           drop_counter_reason: "unknown_service_drop"
-      # - drop:
-      #     expression: ".*\\x00.*"
-      #     drop_counter_reason: "corrupted_log"
       - drop:
           older_than: 24h
           drop_counter_reason: "log_too_old"
@@ -109,4 +103,7 @@ scrape_configs:
       - source_labels: ["__meta_docker_container_label_com_docker_compose_service"]
         target_label: "service"
     pipeline_stages:
+      - drop:
+          expression: ".*\\x00.*"
+          drop_counter_reason: "corrupted_log"
       - docker: {}
