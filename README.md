@@ -75,3 +75,22 @@ docker-compose logs -f
     - **Apps**: Can push directly to Loki.
 3.  **Traces**: Applications push traces to **Otel Collector** or **Tempo** on ports `4317`/`4318`.
 
+## 📚 Documentation
+
+### 🚀 Getting Started
+- **[SOLUTION_ANALYSIS.md](./docs/SOLUTION_ANALYSIS.md)** - Problem analysis, solution comparison, and deployment roadmap
+- **[DEPLOYMENT.md](./docs/DEPLOYMENT.md)** - Complete deployment guide for production environments
+- **[NETWORK_ARCHITECTURE.md](./docs/NETWORK_ARCHITECTURE.md)** - Network topology, data flows, and HA architecture
+
+### 📖 Deep Dive
+- **[OVERVIEW.md](./docs/OVERVIEW.md)** - System overview and observability concepts
+- **[METRICS.md](./docs/METRICS.md)** - Prometheus, exporters, and PromQL queries
+- **[LOGS.md](./docs/LOGS.md)** - Loki, Promtail, and log aggregation
+- **[TRACES.md](./docs/TRACES.md)** - OpenTelemetry and distributed tracing
+- **[DATABASE-MONITORING.md](./docs/DATABASE-MONITORING.md)** - MongoDB and PostgreSQL monitoring
+- **[APPLICATION-LOGGING.md](./docs/APPLICATION-LOGGING.md)** - NestJS Pino-Loki integration
+
+### 🔧 Operations
+- **[INCIDENT_RESPONSE.md](./docs/INCIDENT_RESPONSE.md)** - Incident workflows, runbooks, and troubleshooting
+- **[SRE_BEST_PRACTICES.md](./docs/SRE_BEST_PRACTICES.md)** - SRE principles and best practices
+
