@@ -6,8 +6,8 @@ blocks_storage:
   s3:
     endpoint: minio:9000
     bucket_name: mimir-blocks
-    access_key_id: ${MINIO_ROOT_USER}
-    secret_access_key: ${MINIO_ROOT_PASSWORD}
+    access_key_id: mimir
+    secret_access_key: mimir123
     insecure: true
   
   tsdb:
@@ -49,21 +49,16 @@ server:
   http_listen_port: 9009
   grpc_listen_port: 9095
   log_level: info
-storage:
-  engine: blocks
 
 ruler_storage:
   backend: s3
   s3:
     endpoint: minio:9000
     bucket_name: mimir-ruler
-    access_key_id: ${MINIO_ROOT_USER}
-    secret_access_key: ${MINIO_ROOT_PASSWORD}
+    access_key_id: mimir
+    secret_access_key: mimir123
     insecure: true
 
-query_frontend:
-  results_cache:
-    backend: "" 
 store_gateway:
   sharding_ring:
     replication_factor: 1
