@@ -1484,22 +1484,6 @@
   "templating": {
     "list": [
       {
-        "current": {
-          "selected": true,
-          "text": "Prometheus",
-          "value": "prometheus"
-        },
-        "hide": 0,
-        "includeAll": false,
-        "label": "Datasource",
-        "name": "DS_PROMETHEUS",
-        "options": [],
-        "query": "prometheus",
-        "refresh": 1,
-        "regex": "",
-        "type": "datasource"
-      },
-      {
         "allValue": null,
         "current": {},
         "datasource": "${DS_PROMETHEUS}",
@@ -1623,8 +1607,7 @@
     ]
   },
   "timezone": "browser",
-  "title": "MongoDB - Percona",
-  "uid": "mongodb-percona",
+  "title": "MongoDB",
   "version": 40,
   "description": "Note for a official Grafana MongoDB plugin, please view:\nhttps://grafana.com/grafana/plugins/grafana-mongodb-datasource\n\nThis is a MongoDB Prometheus Exporter Dashboard. \nWorks well with https://github.com/dcu/mongodb_exporter\n\nIf you have the node_exporter running on the mongo instance, you will also get some useful alert panels related to disk io and cpu."
 }

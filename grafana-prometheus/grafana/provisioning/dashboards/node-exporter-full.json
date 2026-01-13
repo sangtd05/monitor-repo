@@ -15686,11 +15686,6 @@
         "name": "ds_prometheus",
         "options": [],
         "query": "prometheus",
-        "current": {
-          "selected": true,
-          "text": "Prometheus",
-          "value": "prometheus"
-        },
         "refresh": 1,
         "regex": "",
         "type": "datasource"
@@ -15764,7 +15759,7 @@
   "timepicker": {},
   "timezone": "browser",
   "title": "Node Exporter Full",
-  "uid": "node-exporter-full",
+  "uid": "rYdddlPWk",
   "version": 98,
   "weekStart": "",
   "gnetId": 1860
