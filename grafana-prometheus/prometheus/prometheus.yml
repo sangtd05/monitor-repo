@@ -39,6 +39,14 @@ scrape_configs:
     static_configs:
       - targets: ["mimir:9009"]
 
+  - job_name: "node-exporter-local"
+    static_configs:
+      - targets: ["node-exporter:9100"]
+        labels:
+          instance: "monitoring-server"
+          environment: "production"
+          role: "monitoring"
+
   - job_name: "node_exporter"
     file_sd_configs:
       - files:
