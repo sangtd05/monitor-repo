@@ -94,6 +94,7 @@ docker-compose logs -f
 - **[APPLICATION-LOGGING.md](./docs/APPLICATION-LOGGING.md)** - NestJS Pino-Loki integration
 
 ### 🔧 Operations
+- **[ALERT_RULES.md](./docs/ALERT_RULES.md)** - Complete alert rules documentation (99 rules)
 - **[INCIDENT_RESPONSE.md](./docs/INCIDENT_RESPONSE.md)** - Incident workflows, runbooks, and troubleshooting
 - **[SRE_BEST_PRACTICES.md](./docs/SRE_BEST_PRACTICES.md)** - SRE principles and best practices
 

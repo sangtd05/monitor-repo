@@ -1,0 +1,400 @@
+groups:
+  - name: Loki
+    rules:
+      - alert: LokiProcessTooManyRestarts
+        expr: 'changes(process_start_time_seconds{job=~".*loki.*"}[15m]) > 2'
+        for: 0m
+        labels:
+          severity: warning
+          component: loki
+        annotations:
+          summary: "Loki process too many restarts (instance {{ $labels.instance }})"
+          description: "A loki process had too many restarts (target {{ $labels.instance }})\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+      - alert: LokiRequestErrors
+        expr: '100 * sum(rate(loki_request_duration_seconds_count{status_code=~"5.."}[1m])) by (namespace, job, route) / sum(rate(loki_request_duration_seconds_count[1m])) by (namespace, job, route) > 10'
+        for: 15m
+        labels:
+          severity: critical
+          component: loki
+        annotations:
+          summary: "Loki request errors (instance {{ $labels.instance }})"
+          description: "The {{ $labels.job }} and {{ $labels.route }} are experiencing errors\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+      - alert: LokiRequestPanic
+        expr: 'sum(increase(loki_panic_total[10m])) by (namespace, job) > 0'
+        for: 5m
+        labels:
+          severity: critical
+          component: loki
+        annotations:
+          summary: "Loki request panic (instance {{ $labels.instance }})"
+          description: "The {{ $labels.job }} is experiencing {{ printf \"%.2f\" $value }}% increase of panics\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+      - alert: LokiRequestLatency
+        expr: '(histogram_quantile(0.99, sum(rate(loki_request_duration_seconds_bucket{route!~"(?i).*tail.*"}[5m])) by (le)))  > 1'
+        for: 5m
+        labels:
+          severity: critical
+          component: loki
+        annotations:
+          summary: "Loki request latency (instance {{ $labels.instance }})"
+          description: "The {{ $labels.job }} {{ $labels.route }} is experiencing {{ printf \"%.2f\" $value }}s 99th percentile latency\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+  - name: Promtail
+    rules:
+      - alert: PromtailDown
+        expr: 'up{job="promtail"} == 0'
+        for: 1m
+        labels:
+          severity: critical
+          component: promtail
+        annotations:
+          summary: "Promtail down (instance {{ $labels.instance }})"
+          description: "Promtail is down - log collection may be affected\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+      - alert: PromtailRequestErrors
+        expr: '100 * sum(rate(promtail_request_duration_seconds_count{status_code=~"5..|failed"}[1m])) by (namespace, job, route, instance) / sum(rate(promtail_request_duration_seconds_count[1m])) by (namespace, job, route, instance) > 10'
+        for: 5m
+        labels:
+          severity: critical
+          component: promtail
+        annotations:
+          summary: "Promtail request errors (instance {{ $labels.instance }})"
+          description: "The {{ $labels.job }} {{ $labels.route }} is experiencing {{ printf \"%.2f\" $value }}% errors.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+      - alert: PromtailRequestLatency
+        expr: 'histogram_quantile(0.99, sum(rate(promtail_request_duration_seconds_bucket[5m])) by (le)) > 1'
+        for: 5m
+        labels:
+          severity: warning
+          component: promtail
+        annotations:
+          summary: "Promtail request latency (instance {{ $labels.instance }})"
+          description: "The {{ $labels.job }} {{ $labels.route }} is experiencing {{ printf \"%.2f\" $value }}s 99th percentile latency.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+  - name: OpenTelemetryCollector
+    rules:
+      - alert: OpentelemetryCollectorDown
+        expr: 'up{job=~".*otel.*collector.*"} == 0'
+        for: 1m
+        labels:
+          severity: critical
+          component: otel-collector
+        annotations:
+          summary: "OpenTelemetry Collector down (instance {{ $labels.instance }})"
+          description: "OpenTelemetry Collector instance has disappeared or is not being scraped\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+      - alert: OpentelemetryCollectorReceiverRefusedSpans
+        expr: 'rate(otelcol_receiver_refused_spans[5m]) > 0'
+        for: 5m
+        labels:
+          severity: critical
+          component: otel-collector
+        annotations:
+          summary: "OpenTelemetry Collector receiver refused spans (instance {{ $labels.instance }})"
+          description: "OpenTelemetry Collector is refusing spans on {{ $labels.receiver }}\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+      - alert: OpentelemetryCollectorReceiverRefusedMetricPoints
+        expr: 'rate(otelcol_receiver_refused_metric_points[5m]) > 0'
+        for: 5m
+        labels:
+          severity: critical
+          component: otel-collector
+        annotations:
+          summary: "OpenTelemetry Collector receiver refused metric points (instance {{ $labels.instance }})"
+          description: "OpenTelemetry Collector is refusing metric points on {{ $labels.receiver }}\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+      - alert: OpentelemetryCollectorReceiverRefusedLogRecords
+        expr: 'rate(otelcol_receiver_refused_log_records[5m]) > 0'
+        for: 5m
+        labels:
+          severity: critical
+          component: otel-collector
+        annotations:
+          summary: "OpenTelemetry Collector receiver refused log records (instance {{ $labels.instance }})"
+          description: "OpenTelemetry Collector is refusing log records on {{ $labels.receiver }}\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+      - alert: OpentelemetryCollectorExporterFailedSpans
+        expr: 'rate(otelcol_exporter_send_failed_spans[5m]) > 0'
+        for: 5m
+        labels:
+          severity: warning
+          component: otel-collector
+        annotations:
+          summary: "OpenTelemetry Collector exporter failed spans (instance {{ $labels.instance }})"
+          description: "OpenTelemetry Collector failing to send spans via {{ $labels.exporter }}\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+      - alert: OpentelemetryCollectorExporterFailedMetricPoints
+        expr: 'rate(otelcol_exporter_send_failed_metric_points[5m]) > 0'
+        for: 5m
+        labels:
+          severity: warning
+          component: otel-collector
+        annotations:
+          summary: "OpenTelemetry Collector exporter failed metric points (instance {{ $labels.instance }})"
+          description: "OpenTelemetry Collector failing to send metric points via {{ $labels.exporter }}\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+      - alert: OpentelemetryCollectorExporterQueueNearlyFull
+        expr: '(otelcol_exporter_queue_size / on(instance, job, exporter) otelcol_exporter_queue_capacity) > 0.8 and otelcol_exporter_queue_capacity > 0'
+        for: 2m
+        labels:
+          severity: warning
+          component: otel-collector
+        annotations:
+          summary: "OpenTelemetry Collector exporter queue nearly full (instance {{ $labels.instance }})"
+          description: "OpenTelemetry Collector exporter {{ $labels.exporter }} queue is over 80% full\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+      - alert: OpentelemetryCollectorHighMemoryUsage
+        expr: '(otelcol_process_runtime_heap_alloc_bytes{job=~".*otel.*collector.*"} / on(instance, job) otelcol_process_runtime_total_sys_memory_bytes{job=~".*otel.*collector.*"}) > 0.9'
+        for: 5m
+        labels:
+          severity: warning
+          component: otel-collector
+        annotations:
+          summary: "OpenTelemetry Collector high memory usage (instance {{ $labels.instance }})"
+          description: "OpenTelemetry Collector memory usage is above 90%\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+  - name: MinIO
+    rules:
+      - alert: MinioClusterDiskOffline
+        expr: 'minio_cluster_drive_offline_total > 0'
+        for: 0m
+        labels:
+          severity: critical
+          component: minio
+        annotations:
+          summary: "Minio cluster disk offline (instance {{ $labels.instance }})"
+          description: "Minio cluster disk is offline\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+      - alert: MinioNodeDiskOffline
+        expr: 'minio_cluster_nodes_offline_total > 0'
+        for: 0m
+        labels:
+          severity: critical
+          component: minio
+        annotations:
+          summary: "Minio node disk offline (instance {{ $labels.instance }})"
+          description: "Minio cluster node disk is offline\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+      - alert: MinioDiskSpaceUsage
+        expr: 'disk_storage_available / disk_storage_total * 100 < 10'
+        for: 2m
+        labels:
+          severity: warning
+          component: minio
+        annotations:
+          summary: "Minio disk space usage (instance {{ $labels.instance }})"
+          description: "Minio available free space is low (< 10%)\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+  - name: Prometheus
+    rules:
+      - alert: PrometheusJobMissing
+        expr: 'absent(up{job="prometheus"})'
+        for: 0m
+        labels:
+          severity: critical
+          component: prometheus
+        annotations:
+          summary: "Prometheus job missing (instance {{ $labels.instance }})"
+          description: "A Prometheus job has disappeared\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+      - alert: PrometheusTargetMissing
+        expr: 'up == 0'
+        for: 5m
+        labels:
+          severity: critical
+          component: prometheus
+        annotations:
+          summary: "Prometheus target missing (instance {{ $labels.instance }})"
+          description: "A Prometheus target has disappeared. An exporter might be crashed.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+      - alert: PrometheusAllTargetsMissing
+        expr: 'sum by (job) (up) == 0'
+        for: 0m
+        labels:
+          severity: critical
+          component: prometheus
+        annotations:
+          summary: "Prometheus all targets missing (instance {{ $labels.instance }})"
+          description: "A Prometheus job does not have living target anymore.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+      - alert: PrometheusTargetMissingWithWarmupTime
+        expr: 'sum by (instance, job) ((up == 0) * on (instance) group_right(job) (node_time_seconds - node_boot_time_seconds > 600))'
+        for: 0m
+        labels:
+          severity: critical
+          component: prometheus
+        annotations:
+          summary: "Prometheus target missing with warmup time (instance {{ $labels.instance }})"
+          description: "Allow a job time to start up (10 minutes) before alerting that it's down.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+      - alert: PrometheusTsdbCheckpointCreationFailures
+        expr: 'increase(prometheus_tsdb_checkpoint_creations_failed_total[1m]) > 0'
+        for: 0m
+        labels:
+          severity: critical
+          component: prometheus
+        annotations:
+          summary: "Prometheus TSDB checkpoint creation failures (instance {{ $labels.instance }})"
+          description: "Prometheus encountered {{ $value }} checkpoint creation failures\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+      - alert: PrometheusTsdbCheckpointDeletionFailures
+        expr: 'increase(prometheus_tsdb_checkpoint_deletions_failed_total[1m]) > 0'
+        for: 0m
+        labels:
+          severity: critical
+          component: prometheus
+        annotations:
+          summary: "Prometheus TSDB checkpoint deletion failures (instance {{ $labels.instance }})"
+          description: "Prometheus encountered {{ $value }} checkpoint deletion failures\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+      - alert: PrometheusTsdbCompactionsFailed
+        expr: 'increase(prometheus_tsdb_compactions_failed_total[1m]) > 0'
+        for: 0m
+        labels:
+          severity: critical
+          component: prometheus
+        annotations:
+          summary: "Prometheus TSDB compactions failed (instance {{ $labels.instance }})"
+          description: "Prometheus encountered {{ $value }} TSDB compactions failures\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+      - alert: PrometheusTsdbHeadTruncationsFailed
+        expr: 'increase(prometheus_tsdb_head_truncations_failed_total[1m]) > 0'
+        for: 0m
+        labels:
+          severity: critical
+          component: prometheus
+        annotations:
+          summary: "Prometheus TSDB head truncations failed (instance {{ $labels.instance }})"
+          description: "Prometheus encountered {{ $value }} TSDB head truncation failures\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+      - alert: PrometheusTsdbReloadFailures
+        expr: 'increase(prometheus_tsdb_reloads_failures_total[1m]) > 0'
+        for: 0m
+        labels:
+          severity: critical
+          component: prometheus
+        annotations:
+          summary: "Prometheus TSDB reload failures (instance {{ $labels.instance }})"
+          description: "Prometheus encountered {{ $value }} TSDB reload failures\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+      - alert: PrometheusTsdbWalCorruptions
+        expr: 'increase(prometheus_tsdb_wal_corruptions_total[1m]) > 0'
+        for: 0m
+        labels:
+          severity: critical
+          component: prometheus
+        annotations:
+          summary: "Prometheus TSDB WAL corruptions (instance {{ $labels.instance }})"
+          description: "Prometheus encountered {{ $value }} TSDB WAL corruptions\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+      - alert: PrometheusTsdbWalTruncationsFailed
+        expr: 'increase(prometheus_tsdb_wal_truncations_failed_total[1m]) > 0'
+        for: 0m
+        labels:
+          severity: critical
+          component: prometheus
+        annotations:
+          summary: "Prometheus TSDB WAL truncations failed (instance {{ $labels.instance }})"
+          description: "Prometheus encountered {{ $value }} TSDB WAL truncation failures\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+      - alert: PrometheusNotConnectedToAlertmanager
+        expr: 'prometheus_notifications_alertmanagers_discovered < 1'
+        for: 0m
+        labels:
+          severity: critical
+          component: prometheus
+        annotations:
+          summary: "Prometheus not connected to alertmanager (instance {{ $labels.instance }})"
+          description: "Prometheus cannot connect the alertmanager\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+      - alert: PrometheusRuleEvaluationFailures
+        expr: 'increase(prometheus_rule_evaluation_failures_total[3m]) > 0'
+        for: 0m
+        labels:
+          severity: critical
+          component: prometheus
+        annotations:
+          summary: "Prometheus rule evaluation failures (instance {{ $labels.instance }})"
+          description: "Prometheus encountered {{ $value }} rule evaluation failures, leading to potentially ignored alerts.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+      - alert: PrometheusTemplateTextExpansionFailures
+        expr: 'increase(prometheus_template_text_expansion_failures_total[3m]) > 0'
+        for: 0m
+        labels:
+          severity: critical
+          component: prometheus
+        annotations:
+          summary: "Prometheus template text expansion failures (instance {{ $labels.instance }})"
+          description: "Prometheus encountered {{ $value }} template text expansion failures\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+      - alert: PrometheusRuleEvaluationSlow
+        expr: 'prometheus_rule_group_last_duration_seconds > prometheus_rule_group_interval_seconds'
+        for: 5m
+        labels:
+          severity: warning
+          component: prometheus
+        annotations:
+          summary: "Prometheus rule evaluation slow (instance {{ $labels.instance }})"
+          description: "Prometheus rule evaluation took more time than the scheduled interval. It indicates a slower storage backend access or too complex query.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+      - alert: PrometheusNotificationsBacklog
+        expr: 'min_over_time(prometheus_notifications_queue_length[10m]) > 0'
+        for: 0m
+        labels:
+          severity: warning
+          component: prometheus
+        annotations:
+          summary: "Prometheus notifications backlog (instance {{ $labels.instance }})"
+          description: "The Prometheus notification queue has not been empty for 10 minutes\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+      - alert: PrometheusAlertmanagerNotificationFailing
+        expr: 'rate(prometheus_notifications_dropped_total[1m]) > 0'
+        for: 0m
+        labels:
+          severity: critical
+          component: prometheus
+        annotations:
+          summary: "Prometheus AlertManager notification failing (instance {{ $labels.instance }})"
+          description: "Alertmanager is failing sending notifications\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+      - alert: PrometheusTargetEmpty
+        expr: 'prometheus_sd_discovered_targets == 0'
+        for: 0m
+        labels:
+          severity: critical
+          component: prometheus
+        annotations:
+          summary: "Prometheus target empty (instance {{ $labels.instance }})"
+          description: "Prometheus has no target in service discovery\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+      - alert: PrometheusTargetScrapingSlow
+        expr: 'prometheus_target_interval_length_seconds{quantile="0.9"} / on (interval, instance, job) prometheus_target_interval_length_seconds{quantile="0.5"} > 1.05'
+        for: 5m
+        labels:
+          severity: warning
+          component: prometheus
+        annotations:
+          summary: "Prometheus target scraping slow (instance {{ $labels.instance }})"
+          description: "Prometheus is scraping exporters slowly since it exceeded the requested interval time. Your Prometheus server is under-provisioned.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+      - alert: PrometheusLargeScrape
+        expr: 'increase(prometheus_target_scrapes_exceeded_sample_limit_total[10m]) > 10'
+        for: 5m
+        labels:
+          severity: warning
+          component: prometheus
+        annotations:
+          summary: "Prometheus large scrape (instance {{ $labels.instance }})"
+          description: "Prometheus has many scrapes that exceed the sample limit\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+      - alert: PrometheusTargetScrapeDuplicate
+        expr: 'increase(prometheus_target_scrapes_sample_duplicate_timestamp_total[5m]) > 0'
+        for: 0m
+        labels:
+          severity: warning
+          component: prometheus
+        annotations:
+          summary: "Prometheus target scrape duplicate (instance {{ $labels.instance }})"
+          description: "Prometheus has many samples rejected due to duplicate timestamps but different values\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
