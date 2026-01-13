@@ -1,0 +1,74 @@
+multitenancy_enabled: true
+
+blocks_storage:
+  backend: s3
+  
+  s3:
+    endpoint: minio:9000
+    bucket_name: mimir-blocks
+    access_key_id: ${MINIO_ROOT_USER}
+    secret_access_key: ${MINIO_ROOT_PASSWORD}
+    insecure: true
+  
+  tsdb:
+    dir: /data/mimir/tsdb
+    retention_period: 24h
+  
+  bucket_store:
+    sync_dir: /data/mimir/tsdb-sync
+
+compactor:
+  data_dir: /data/mimir/compactor
+  sharding_ring:
+    kvstore:
+      store: memberlist
+
+distributor:
+  ring:
+    kvstore:
+      store: memberlist
+ingester:
+  ring:
+    kvstore:
+      store: memberlist
+    replication_factor: 1
+
+limits:
+  ingestion_rate: 100000
+  ingestion_burst_size: 200000
+  max_global_series_per_user: 1000000
+  max_global_series_per_metric: 100000
+  
+  compactor_blocks_retention_period: 90d
+
+memberlist:
+  join_members:
+    - mimir:7946
+
+server:
+  http_listen_port: 9009
+  grpc_listen_port: 9095
+  log_level: info
+storage:
+  engine: blocks
+
+ruler_storage:
+  backend: s3
+  s3:
+    endpoint: minio:9000
+    bucket_name: mimir-ruler
+    access_key_id: ${MINIO_ROOT_USER}
+    secret_access_key: ${MINIO_ROOT_PASSWORD}
+    insecure: true
+
+query_frontend:
+  results_cache:
+    backend: "" 
+store_gateway:
+  sharding_ring:
+    replication_factor: 1
+    kvstore:
+      store: memberlist
+
+runtime_config:
+  file: /etc/mimir/runtime.yml

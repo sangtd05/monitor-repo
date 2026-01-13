@@ -10,6 +10,8 @@ The system consists of the following core components:
 |-----------|----------|------|
 | **Grafana** | Visualization & Dashboarding | `3000` |
 | **Prometheus** | Metrics Collection & Storage | `9090` |
+| **Mimir** | Long-term Metrics Storage | `9009` |
+| **MinIO** | S3-compatible Object Storage | `9000`, `9001` |
 | **Loki** | Log Aggregation | `3100` |
 | **Tempo** | Distributed Tracing | `3200` |
 | **Alertmanager** | Alerting (Telegram integrated) | `9093` |
@@ -85,6 +87,7 @@ docker-compose logs -f
 ### 📖 Deep Dive
 - **[OVERVIEW.md](./docs/OVERVIEW.md)** - System overview and observability concepts
 - **[METRICS.md](./docs/METRICS.md)** - Prometheus, exporters, and PromQL queries
+- **[MIMIR_GUIDE.md](./docs/MIMIR_GUIDE.md)** - Grafana Mimir long-term storage setup and usage
 - **[LOGS.md](./docs/LOGS.md)** - Loki, Promtail, and log aggregation
 - **[TRACES.md](./docs/TRACES.md)** - OpenTelemetry and distributed tracing
 - **[DATABASE-MONITORING.md](./docs/DATABASE-MONITORING.md)** - MongoDB and PostgreSQL monitoring

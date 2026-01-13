@@ -56,3 +56,18 @@ datasources:
         spanEndTimeShift: "0"
         filterByTraceID: true
         filterBySpanID: false
+
+  - name: Mimir
+    type: prometheus
+    uid: mimir
+    access: proxy
+    url: http://mimir:9009/prometheus
+    isDefault: false
+    editable: true
+    jsonData:
+      timeInterval: "15s"
+      queryTimeout: "120s"
+      httpMethod: "POST"
+      httpHeaderName1: "X-Scope-OrgID"
+    secureJsonData:
+      httpHeaderValue1: "demo"
