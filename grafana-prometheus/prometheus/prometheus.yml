@@ -26,26 +26,14 @@ scrape_configs:
   - job_name: "loki"
     static_configs:
       - targets: ["loki:3100"]
-    metric_relabel_configs:
-      - source_labels: [__name__]
-        regex: '.*\..*'
-        action: drop
 
   - job_name: "tempo"
     static_configs:
       - targets: ["tempo:3200"]
-    metric_relabel_configs:
-      - source_labels: [__name__]
-        regex: '.*\..*'
-        action: drop
 
   - job_name: "mimir"
     static_configs:
       - targets: ["mimir:9009"]
-    metric_relabel_configs:
-      - source_labels: [__name__]
-        regex: '.*\..*'
-        action: drop
 
   - job_name: "node-exporter-local"
     static_configs:
@@ -82,6 +70,12 @@ scrape_configs:
 
 remote_write:
   - url: http://mimir:9009/api/v1/push
+    write_relabel_configs:
+      - source_labels: [__name__]
+        regex: '.*\..*'
+        action: drop
+      - regex: 'otel\..*'
+        action: labeldrop
     headers:
       X-Scope-OrgID: demo
     queue_config:
