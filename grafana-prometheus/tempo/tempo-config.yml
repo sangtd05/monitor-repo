@@ -20,7 +20,8 @@ distributor:
       endpoint: 0.0.0.0:9411
 
 ingester:
-  max_block_duration: 5m
+  max_block_duration: 30s
+  complete_block_timeout: 1m
 
 compactor:
   compaction:
@@ -61,7 +62,7 @@ metrics_generator:
         - span.kind
     local_blocks:
       max_live_traces: 10000
-      max_block_duration: 5m
+      max_block_duration: 30s
 
 overrides:
   metrics_generator_processors: [service-graphs, span-metrics, local-blocks]
