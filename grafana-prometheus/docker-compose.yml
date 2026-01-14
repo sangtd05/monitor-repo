@@ -30,22 +30,6 @@ services:
     networks:
       - monitoring
 
-  otel-collector:
-    image: otel/opentelemetry-collector-contrib:latest
-    container_name: otel-collector
-    command: [ "--config=/etc/otelcol/otel-collector-config.yml" ]
-    ports:
-      - "4317:4317" # OTLP gRPC
-      - "4318:4318" # OTLP HTTP
-    volumes:
-      - ./otel-collector:/etc/otelcol
-    restart: unless-stopped
-    networks:
-      - monitoring
-    depends_on:
-      - tempo
-      - loki
-
   loki:
     image: grafana/loki:latest
     container_name: loki
@@ -59,6 +43,32 @@ services:
     networks:
       - monitoring
 
+  alloy:
+    image: grafana/alloy:latest
+    container_name: alloy
+    user: root
+    command:
+      - run
+      - /etc/alloy/config.alloy
+      - --server.http.listen-addr=0.0.0.0:12345
+      - --storage.path=/var/lib/alloy/data
+    ports:
+      - "4317:4317"
+      - "4318:4318"
+      - "12345:12345"
+    volumes:
+      - ./alloy:/etc/alloy
+      - /var/log:/var/log:ro
+      - /var/lib/docker:/var/lib/docker:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - alloy-data:/var/lib/alloy
+    restart: unless-stopped
+    networks:
+      - monitoring
+    depends_on:
+      - tempo
+      - loki
+
   pyroscope:
     image: pyroscope/pyroscope:latest
     container_name: pyroscope
@@ -67,23 +77,6 @@ services:
     restart: unless-stopped
     networks:
       - monitoring
-
-  promtail:
-    image: grafana/promtail:latest
-    container_name: promtail
-    user: root
-    volumes:
-      - ./promtail:/etc/promtail
-      - /var/log:/var/log
-      - /var/lib/docker:/var/lib/docker
-      - /var/run/docker.sock:/var/run/docker.sock
-      - promtail-data:/tmp
-    command: -config.file=/etc/promtail/promtail-config.yml
-    restart: unless-stopped
-    networks:
-      - monitoring
-    depends_on:
-      - loki
 
   alertmanager:
     image: prom/alertmanager:latest
@@ -192,8 +185,7 @@ services:
       - monitoring
     depends_on:
       - prometheus
-      - loki
-      - tempo
+      - alloy
       - alertmanager
       - mimir
 
@@ -221,7 +213,7 @@ volumes:
   minio-data:
   mimir-data:
   alertmanager-data:
-  promtail-data:
+  alloy-data:
 
 
 networks:

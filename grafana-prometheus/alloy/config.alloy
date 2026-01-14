@@ -1,0 +1,343 @@
+// ============================================================================
+// Grafana Alloy Configuration
+// Replaces: Promtail + OpenTelemetry Collector
+// ============================================================================
+
+// ----------------------------------------------------------------------------
+// LOGGING COMPONENTS (replaces Promtail)
+// ----------------------------------------------------------------------------
+
+// Discover Docker containers
+discovery.docker "containers" {
+  host = "unix:///var/run/docker.sock"
+  refresh_interval = "5s"
+}
+
+// Relabel Docker containers for log collection
+discovery.relabel "docker_logs" {
+  targets = discovery.docker.containers.targets
+
+  // Extract container ID for log path
+  rule {
+    source_labels = ["__meta_docker_container_id"]
+    target_label  = "__path__"
+    replacement   = "/var/lib/docker/containers/$1/$1-json.log"
+  }
+
+  // Extract container name
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex         = "/(.*)"
+    target_label  = "container"
+  }
+
+  // Extract compose service name
+  rule {
+    source_labels = ["__meta_docker_container_label_com_docker_compose_service"]
+    regex         = "(.+)"
+    target_label  = "service"
+    replacement   = "$1"
+  }
+
+  // Fallback: use container name if no compose service
+  rule {
+    source_labels = ["service", "container"]
+    regex         = "^;(.+)$"
+    target_label  = "service"
+    replacement   = "$1"
+  }
+
+  // Set service_name
+  rule {
+    source_labels = ["service"]
+    target_label  = "service_name"
+  }
+
+  // Default service_name if empty
+  rule {
+    source_labels = ["service_name"]
+    regex         = "^$"
+    target_label  = "service_name"
+    replacement   = "unknown_service"
+  }
+
+  // Use container name if service_name is unknown
+  rule {
+    source_labels = ["service_name", "container"]
+    regex         = "unknown_service;(.+)"
+    target_label  = "service_name"
+    replacement   = "$1"
+  }
+
+  // Extract log stream (stdout/stderr)
+  rule {
+    source_labels = ["__meta_docker_container_log_stream"]
+    target_label  = "logstream"
+  }
+
+  // Extract compose service label
+  rule {
+    source_labels = ["__meta_docker_container_label_com_docker_compose_service"]
+    target_label  = "compose_service"
+  }
+
+  // Extract compose project label
+  rule {
+    source_labels = ["__meta_docker_container_label_com_docker_compose_project"]
+    target_label  = "compose_project"
+  }
+
+  // Set job label
+  rule {
+    target_label = "job"
+    replacement  = "docker"
+  }
+}
+
+// Collect and process Docker logs
+loki.source.docker "containers" {
+  host             = "unix:///var/run/docker.sock"
+  targets          = discovery.relabel.docker_logs.output
+  forward_to       = [loki.process.docker_logs.receiver]
+  relabel_rules    = discovery.relabel.docker_logs.rules
+}
+
+// Process Docker logs
+loki.process "docker_logs" {
+  // Drop corrupted logs (control characters)
+  stage.drop {
+    expression = ".*[\\x00-\\x08\\x0B\\x0C\\x0E-\\x1F].*"
+    drop_counter_reason = "corrupted_log"
+  }
+
+  // Drop logs older than 24h
+  stage.drop {
+    older_than = "24h"
+    drop_counter_reason = "log_too_old"
+  }
+
+  forward_to = [loki.write.default.receiver]
+}
+
+// ----------------------------------------------------------------------------
+// System logs from /var/log
+// ----------------------------------------------------------------------------
+
+local.file_match "system_logs" {
+  path_targets = [{
+    __address__ = "localhost",
+    __path__    = "/var/log/*.log",
+    job         = "varlogs",
+    service     = "varlogs",
+    service_name = "varlogs",
+  }]
+}
+
+// Filter out unwanted system logs
+discovery.relabel "system_logs" {
+  targets = local.file_match.system_logs.targets
+
+  // Drop specific log files
+  rule {
+    source_labels = ["__path__"]
+    regex         = ".*(apport|dpkg|ubuntu-advantage|vmware|alternatives|bootstrap|cloud-init).*\\.log"
+    action        = "drop"
+  }
+}
+
+// Collect system logs
+loki.source.file "system" {
+  targets    = discovery.relabel.system_logs.output
+  forward_to = [loki.process.system_logs.receiver]
+}
+
+// Process system logs
+loki.process "system_logs" {
+  // Extract timestamp, level, message
+  stage.regex {
+    expression = "^(?P<timestamp>\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d+Z)\\s+(?P<level>\\w+)\\s+(?P<message>.*)"
+  }
+
+  // Add level as label
+  stage.labels {
+    values = {
+      level = "",
+    }
+  }
+
+  // Parse timestamp
+  stage.timestamp {
+    source = "timestamp"
+    format = "RFC3339"
+  }
+
+  forward_to = [loki.write.default.receiver]
+}
+
+// ----------------------------------------------------------------------------
+// Exporter logs (containers with "exporter" in name)
+// ----------------------------------------------------------------------------
+
+discovery.relabel "exporter_logs" {
+  targets = discovery.docker.containers.targets
+
+  // Keep only containers with "exporter" in name
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex         = ".*exporter.*"
+    action        = "keep"
+  }
+
+  // Extract container ID for log path
+  rule {
+    source_labels = ["__meta_docker_container_id"]
+    target_label  = "__path__"
+    replacement   = "/var/lib/docker/containers/$1/$1-json.log"
+  }
+
+  // Extract exporter name
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex         = "/(.*)"
+    target_label  = "exporter_name"
+  }
+
+  // Extract compose service
+  rule {
+    source_labels = ["__meta_docker_container_label_com_docker_compose_service"]
+    target_label  = "service"
+  }
+
+  // Set job label
+  rule {
+    target_label = "job"
+    replacement  = "exporters"
+  }
+}
+
+// Collect exporter logs
+loki.source.docker "exporters" {
+  host             = "unix:///var/run/docker.sock"
+  targets          = discovery.relabel.exporter_logs.output
+  forward_to       = [loki.process.exporter_logs.receiver]
+  relabel_rules    = discovery.relabel.exporter_logs.rules
+}
+
+// Process exporter logs
+loki.process "exporter_logs" {
+  // Drop corrupted logs
+  stage.drop {
+    expression = ".*[\\x00-\\x08\\x0B\\x0C\\x0E-\\x1F].*"
+    drop_counter_reason = "corrupted_log"
+  }
+
+  // Drop old logs
+  stage.drop {
+    older_than = "24h"
+    drop_counter_reason = "log_too_old"
+  }
+
+  forward_to = [loki.write.default.receiver]
+}
+
+// ----------------------------------------------------------------------------
+// Write logs to Loki
+// ----------------------------------------------------------------------------
+
+loki.write "default" {
+  endpoint {
+    url = "http://loki:3100/loki/api/v1/push"
+    tenant_id = "1"
+  }
+}
+
+// ============================================================================
+// TRACING COMPONENTS (replaces OpenTelemetry Collector)
+// ============================================================================
+
+// ----------------------------------------------------------------------------
+// OTLP Receivers (gRPC and HTTP)
+// ----------------------------------------------------------------------------
+
+otelcol.receiver.otlp "default" {
+  // gRPC endpoint for OTLP
+  grpc {
+    endpoint = "0.0.0.0:4317"
+  }
+
+  // HTTP endpoint for OTLP
+  http {
+    endpoint = "0.0.0.0:4318"
+  }
+
+  output {
+    metrics = [otelcol.processor.memory_limiter.default.input]
+    traces  = [otelcol.processor.memory_limiter.default.input]
+    logs    = [otelcol.processor.memory_limiter.default.input]
+  }
+}
+
+// ----------------------------------------------------------------------------
+// Processors
+// ----------------------------------------------------------------------------
+
+// Memory limiter (prevent OOM)
+otelcol.processor.memory_limiter "default" {
+  check_interval = "1s"
+  limit          = "400MiB"
+  spike_limit    = "100MiB"
+
+  output {
+    metrics = [otelcol.processor.batch.default.input]
+    traces  = [otelcol.processor.batch.default.input]
+    logs    = [otelcol.processor.batch.default.input]
+  }
+}
+
+// Batch processor (improve performance)
+otelcol.processor.batch "default" {
+  timeout             = "5s"
+  send_batch_size     = 8192
+  send_batch_max_size = 10000  // Must be >= send_batch_size
+
+  output {
+    metrics = []  // Drop OTEL metrics - not compatible with Mimir
+    traces  = [otelcol.exporter.otlp.tempo.input]
+    logs    = []  // Not forwarding OTLP logs, using Loki instead
+  }
+}
+
+// ----------------------------------------------------------------------------
+// Exporters
+// ----------------------------------------------------------------------------
+
+// Export traces to Tempo
+otelcol.exporter.otlp "tempo" {
+  client {
+    endpoint = "tempo:4317"
+    tls {
+      insecure = true
+    }
+  }
+}
+
+// Note: OTEL metrics exporter removed - metrics are dropped in batch processor
+// Only traces are forwarded to Tempo
+
+// ============================================================================
+// SELF-MONITORING
+// ============================================================================
+
+// Expose Alloy's own metrics for Prometheus scraping
+prometheus.exporter.self "alloy" { }
+
+prometheus.scrape "alloy" {
+  targets    = prometheus.exporter.self.alloy.targets
+  forward_to = [prometheus.remote_write.alloy_metrics.receiver]
+}
+
+prometheus.remote_write "alloy_metrics" {
+  endpoint {
+    url = "http://prometheus:9090/api/v1/write"
+  }
+}
