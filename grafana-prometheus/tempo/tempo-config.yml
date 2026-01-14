@@ -57,6 +57,8 @@ metrics_generator:
         - http.method
         - http.status_code
         - service.name
+        - http.route
+        - span.kind
     local_blocks:
       max_live_traces: 10000
       max_block_duration: 5m
