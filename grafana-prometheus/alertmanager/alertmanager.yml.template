@@ -1,11 +1,13 @@
 global:
   resolve_timeout: 5m
+
 route:
-  group_by: ["alertname"]
+  group_by: ["alertname", "instance"]
   group_wait: 10s
   group_interval: 10s
   repeat_interval: 1h
   receiver: "telegram"
+
 receivers:
   - name: "telegram"
     telegram_configs:
@@ -19,23 +21,33 @@ receivers:
           <b>{{ .GroupLabels.alertname }}</b>
           {{ if .CommonLabels.severity }}━━━━━━━━━━━━━━━━━━━━
           📊 Mức độ: <code>{{ .CommonLabels.severity }}</code>{{ end }}
-          {{- range .Alerts }}
           
-          {{ .Annotations.description }}
-          {{- if .Annotations.summary }}
-          � {{ .Annotations.summary }}
+          {{- if gt (len .Alerts) 5 }}
+          ⚠️ <i>{{ len .Alerts }} alerts - hiển thị 5 đầu tiên</i>
           {{- end }}
-          {{- if .Labels.instance }}
-          🖥 Server: <code>{{ .Labels.instance }}</code>
+          
+          {{- range $index, $alert := .Alerts }}
+          {{- if lt $index 5 }}
+          
+          {{- if $alert.Annotations.summary }}
+          📝 {{ $alert.Annotations.summary }}
           {{- end }}
-          {{- if .Annotations.value }}
-          📈 Giá trị: <code>{{ .Annotations.value }}</code>
+          {{- if $alert.Labels.instance }}
+          🖥 <code>{{ $alert.Labels.instance }}</code>
           {{- end }}
-          🕐 {{ (.StartsAt.Add 25200e9).Format "15:04:05 - 02/01/2006" }}
+          {{- if $alert.Labels.device }}
+          💾 Device: <code>{{ $alert.Labels.device }}</code>
           {{- end }}
+          {{- if $alert.Labels.mountpoint }}
+          📁 Mount: <code>{{ $alert.Labels.mountpoint }}</code>
+          {{- end }}
+          🕐 {{ ($alert.StartsAt.Add 25200e9).Format "15:04:05 - 02/01/2006" }}
+          {{- end }}
+          {{- end }}
+
 inhibit_rules:
   - source_match:
       severity: "critical"
     target_match:
       severity: "warning"
-    equal: ["alertname", "dev", "instance"]
+    equal: ["alertname", "instance"]
