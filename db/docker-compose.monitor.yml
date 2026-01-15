@@ -60,4 +60,5 @@ volumes:
 
 networks:
   db-monitor:
-    driver: bridge
+    external: true
+    name: dhs-ptit-data_default
