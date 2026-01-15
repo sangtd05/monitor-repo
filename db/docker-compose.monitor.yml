@@ -41,8 +41,6 @@ services:
       - ENVIRONMENT=${ENVIRONMENT}
       - POSTGRES_SERVICE_NAME=${POSTGRES_SERVICE_NAME}
       - MONGODB_SERVICE_NAME=${MONGODB_SERVICE_NAME}
-      - POSTGRES_CONTAINER_NAME=${POSTGRES_CONTAINER_NAME}
-      - MONGODB_CONTAINER_NAME=${MONGODB_CONTAINER_NAME}
     volumes:
       - ./alloy:/etc/alloy:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro

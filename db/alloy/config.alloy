@@ -20,13 +20,13 @@ discovery.docker "all_containers" {
 // ============================================================================
 // POSTGRESQL PIPELINE
 // ============================================================================
-
+// Lọc container PostgreSQL (hardcoded để tránh env() deprecation)
 discovery.relabel "postgres_filter" {
   targets = discovery.docker.all_containers.targets
 
   rule {
     source_labels = ["__meta_docker_container_name"]
-    regex         = format("/?%s", env("POSTGRES_CONTAINER_NAME"))
+    regex         = "/?dhs-ptit-data-postgres-1"
     action        = "keep"
   }
 }
@@ -104,13 +104,13 @@ loki.process "postgresql" {
 // ============================================================================
 // MONGODB PIPELINE
 // ============================================================================
-
+// Lọc container MongoDB (hardcoded để tránh env() deprecation)
 discovery.relabel "mongodb_filter" {
   targets = discovery.docker.all_containers.targets
 
   rule {
     source_labels = ["__meta_docker_container_name"]
-    regex         = format("/?%s", env("MONGODB_CONTAINER_NAME"))
+    regex         = "/?dhs-ptit-data-mongodb-1"
     action        = "keep"
   }
 }

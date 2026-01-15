@@ -162,7 +162,7 @@ services:
       - grafana-data:/var/lib/grafana
       - ./grafana/provisioning:/etc/grafana/provisioning
     environment:
-      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-AISoft123#@!}
       - GF_USERS_ALLOW_SIGN_UP=false
     restart: unless-stopped
     networks:
