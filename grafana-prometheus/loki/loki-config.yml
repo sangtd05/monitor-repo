@@ -8,9 +8,13 @@ server:
 common:
   path_prefix: /loki
   storage:
-    filesystem:
-      chunks_directory: /loki/chunks
-      rules_directory: /loki/rules
+    s3:
+      endpoint: minio:9000
+      bucketnames: loki
+      access_key_id: mimir
+      secret_access_key: mimir123
+      s3forcepathstyle: true
+      insecure: true
   replication_factor: 1
   ring:
     kvstore:
@@ -20,7 +24,7 @@ schema_config:
   configs:
     - from: 2024-01-01
       store: tsdb
-      object_store: filesystem
+      object_store: s3
       schema: v13
       index:
         prefix: index_
@@ -28,12 +32,11 @@ schema_config:
 
 compactor:
   working_directory: /loki/compactor
-  # shared_store: filesystem
   compaction_interval: 10m
   retention_enabled: true
   retention_delete_delay: 2h
   retention_delete_worker_count: 150
-  delete_request_store: filesystem
+  delete_request_store: s3
 
 limits_config:
   retention_period: 168h

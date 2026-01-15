@@ -133,7 +133,7 @@ services:
       minio:
         condition: service_healthy
     entrypoint: >
-      /bin/sh -c " /usr/bin/mc alias set myminio http://minio:9000 ${MINIO_ROOT_USER:-mimir} ${MINIO_ROOT_PASSWORD:-mimir123}; /usr/bin/mc mb myminio/mimir-blocks --ignore-existing; /usr/bin/mc mb myminio/mimir-ruler --ignore-existing; /usr/bin/mc mb myminio/mimir-alertmanager --ignore-existing; /usr/bin/mc mb myminio/tempo --ignore-existing; exit 0; "
+      /bin/sh -c " /usr/bin/mc alias set myminio http://minio:9000 ${MINIO_ROOT_USER:-mimir} ${MINIO_ROOT_PASSWORD:-mimir123}; /usr/bin/mc mb myminio/mimir-blocks --ignore-existing; /usr/bin/mc mb myminio/mimir-ruler --ignore-existing; /usr/bin/mc mb myminio/mimir-alertmanager --ignore-existing; /usr/bin/mc mb myminio/tempo --ignore-existing; /usr/bin/mc mb myminio/loki --ignore-existing; exit 0; "
     networks:
       - monitoring
 
