@@ -1,125 +1,87 @@
-services:
-  postgres-test:
-    image: postgres:16-alpine
-    container_name: postgres-test
-    environment:
-      - POSTGRES_USER=${POSTGRES_USER:-testuser}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-testpass}
-      - POSTGRES_DB=${POSTGRES_DB:-testdb}
-      - POSTGRES_INITDB_ARGS=--encoding=UTF8 --locale=en_US.utf8
-    volumes:
-      - postgres-data:/var/lib/postgresql/data
-    command: |
-      postgres
-      -c logging_collector=on
-      -c log_directory=/var/lib/postgresql/data/pg_log
-      -c log_filename=postgresql-%Y-%m-%d_%H%M%S.log
-      -c log_min_duration_statement=0
-      -c log_statement=all
-      -c log_connections=on
-      -c log_disconnections=on
-      -c log_duration=on
-      -c log_line_prefix='%t [%p]: [%l-1] user=%u,db=%d,app=%a,client=%h '
-    # ports:
-    #   - "5432:5432"
-    networks:
-      - db-network
-    restart: unless-stopped
-    healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-testuser}" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  mongodb-test:
-    image: mongo:7
-    container_name: mongodb-test
-    environment:
-      - MONGO_INITDB_ROOT_USERNAME=${MONGO_ROOT_USER:-admin}
-      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_ROOT_PASSWORD:-adminpass}
-      - MONGO_INITDB_DATABASE=${MONGO_DB:-testdb}
-    volumes:
-      - mongodb-data:/data/db
-      - mongodb-logs:/var/log/mongodb
-    command: |
-      mongod
-      --auth
-      --logpath /var/log/mongodb/mongod.log
-      --logappend
-      --verbose
-    # ports:
-    #   - "27017:27017"
-    networks:
-      - db-network
-    restart: unless-stopped
-    healthcheck:
-      test: [ "CMD", "mongosh", "--eval", "db.adminCommand('ping')" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  postgres-exporter:
-    image: bitnami/postgres-exporter:latest
-    container_name: postgres-exporter-test
-    environment:
-      - DATA_SOURCE_NAME=postgresql://${POSTGRES_USER:-testuser}:${POSTGRES_PASSWORD:-testpass}@postgres-test:5432/${POSTGRES_DB:-testdb}?sslmode=disable
-      - PG_EXPORTER_AUTO_DISCOVER_DATABASES=true
-      - PG_EXPORTER_EXCLUDE_DATABASES=template0,template1
-    ports:
-      - "9187:9187"
-    networks:
-      - db-network
-    depends_on:
-      postgres-test:
-        condition: service_healthy
-    restart: unless-stopped
-
-  mongodb-exporter:
-    image: percona/mongodb_exporter:0.40
-    container_name: mongodb-exporter-test
-    command:
-      - "--mongodb.uri=mongodb://${MONGO_ROOT_USER:-admin}:${MONGO_ROOT_PASSWORD:-adminpass}@mongodb-test:27017"
-      - "--collect-all"
-      - "--compatible-mode"
-      - "--collector.replicasetstatus"
-      - "--discovering-mode"
-    ports:
-      - "9216:9216"
-    networks:
-      - db-network
-    depends_on:
-      mongodb-test:
-        condition: service_healthy
-    restart: unless-stopped
-
-  promtail-db:
-    image: grafana/promtail:latest
-    container_name: promtail-db
-    user: root
-    volumes:
-      - ./promtail/promtail-config.yml:/etc/promtail/promtail-config.yml
-      - postgres-data:/var/log/postgres:ro
-      - mongodb-logs:/var/log/mongodb:ro
-      - promtail-positions:/tmp/positions
-    command: -config.file=/etc/promtail/promtail-config.yml
-    # ports:
-    #   - "9080:9080"
-    networks:
-      - db-network
-    environment:
-      - LOKI_URL=${LOKI_URL:-http://10.99.3.67:3100}
-    depends_on:
-      - postgres-test
-      - mongodb-test
-    restart: unless-stopped
-
 volumes:
-  postgres-data:
-  mongodb-data:
-  mongodb-logs:
-  promtail-positions:
+  postgres-datastore:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: ./postgres/data
 
+  postgres-init:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: ./postgres/init
+
+  mongodb-datastore:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: ./mongodb/data
+
+services:
+  postgres:
+    image: mirror.gcr.io/postgres:15-alpine
+    environment:
+      POSTGRES_MULTIPLE_DATABASES: keycloak,tcns,qldt,core,"tai-chinh","co-so-vat-chat","ph-tc"
+      POSTGRES_USER: ${SQL_USER}
+      POSTGRES_PASSWORD: ${SQL_PASSWORD}
+    volumes:
+      - postgres-datastore:/var/lib/postgresql/data
+      - postgres-init:/docker-entrypoint-initdb.d
+    command:
+      - "postgres"
+      - "-c"
+      - "log_destination=stderr"
+      - "-c"
+      - "logging_collector=off"
+      - "-c"
+      - "log_min_duration_statement=100"
+      - "-c"
+      - "log_statement=ddl"
+      - "-c"
+      - "log_connections=on"
+      - "-c"
+      - "log_disconnections=on"
+      - "-c"
+      - "log_duration=on"
+      - "-c"
+      - "log_line_prefix=%t [%p]: [%l-1] user=%u,db=%d,app=%a,client=%h "
+    ports:
+      - ${SQL_PORT}:5432
+    restart: always
+    networks:
+      - db-monitor
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "3"
+
+  mongodb:
+    image: mirror.gcr.io/bitnamilegacy/mongodb:7.0.6
+    environment:
+      MONGODB_REPLICA_SET_MODE: primary
+      MONGODB_REPLICA_SET_NAME: rs0
+      MONGODB_ADVERTISED_HOSTNAME: mongodb
+      MONGODB_REPLICA_SET_KEY: SM5vZj0xyE
+      MONGODB_ROOT_USER: ${MONGODB_USER}
+      MONGODB_ROOT_PASSWORD: ${MONGODB_PASSWORD}
+      MONGODB_EXTRA_FLAGS: "--profile=1 --slowms=100 --logLevel=1"
+    volumes:
+      - mongodb-datastore:/bitnami
+    ports:
+      - ${MONGODB_PORT}:27017
+    restart: always
+    networks:
+      - db-monitor
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "3"
 
 networks:
-  db-network:
+  db-monitor:
     driver: bridge

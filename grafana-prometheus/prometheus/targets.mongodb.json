@@ -1,0 +1,12 @@
+[
+    {
+        "targets": [
+            "10.170.100.35:9216"
+        ],
+        "labels": {
+            "job": "mongodb",
+            "env": "production",
+            "server": "db-server"
+        }
+    }
+]

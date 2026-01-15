@@ -38,31 +38,41 @@ storage:
       insecure: true
     wal:
       path: /var/tempo/wal
+    cache: none
+    pool:
+      max_workers: 50
+      queue_depth: 2000
 
-metrics_generator:
-  registry:
-    external_labels:
-      source: tempo
-      cluster: docker-compose
-  storage:
-    path: /var/tempo/generator/wal
-    remote_write:
-      - url: http://prometheus:9090/api/v1/write
-        send_exemplars: true
-  processor:
-    service_graphs:
-      max_items: 10000
-      wait: 10s
-    span_metrics:
-      dimensions:
-        - http.method
-        - http.status_code
-        - service.name
-        - http.route
-        - span.kind
-    local_blocks:
-      max_live_traces: 10000
-      max_block_duration: 30s
+# metrics_generator:
+#   registry:
+#     external_labels:
+#       source: tempo
+#       cluster: docker-compose
+#   storage:
+#     path: /var/tempo/generator/wal
+#     remote_write:
+#       - url: http://prometheus:9090/api/v1/write
+#         send_exemplars: true
+#   processor:
+#     service_graphs:
+#       max_items: 10000
+#       wait: 10s
+#     span_metrics:
+#       dimensions:
+#         - http.method
+#         - http.status_code
+#         - service.name
+#         - http.route
+#         - span.kind
+#     local_blocks:
+#       max_live_traces: 10000
+#       max_block_duration: 30s
+
+# overrides:
+#   metrics_generator_processors: [service-graphs, span-metrics, local-blocks]
 
 overrides:
-  metrics_generator_processors: [service-graphs, span-metrics, local-blocks]
+  max_bytes_per_tag_values_query: 5000000
+  max_blocks_per_tag_values_query: 20
+  ingestion_rate_limit_bytes: 15000000
+  ingestion_burst_size_bytes: 20000000

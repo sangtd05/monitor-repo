@@ -1,0 +1,170 @@
+// Grafana Alloy configuration for Database Logs (Docker Socket Version)
+// Collects PostgreSQL and MongoDB logs from Docker Socket and sends to Loki
+
+// ============================================================================
+// LOKI CLIENT - Send logs to Loki
+// ============================================================================
+loki.write "loki_endpoint" {
+  endpoint {
+    url = env("LOKI_URL")
+  }
+}
+
+// ============================================================================
+// DOCKER DISCOVERY (Common Source)
+// ============================================================================
+// Bước 1: Kết nối vào Docker Socket để tìm tất cả container
+discovery.docker "all_containers" {
+  host = "unix:///var/run/docker.sock"
+}
+
+// ============================================================================
+// POSTGRESQL PIPELINE
+// ============================================================================
+
+// Bước 2a: Lọc lấy Container có tên chứa chữ "postgres"
+discovery.relabel "postgres_filter" {
+  targets = discovery.docker.all_containers.targets
+
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex         = "/?.*postgres.*"  // Regex bắt tên container (có thể có dấu / ở đầu)
+    action        = "keep"
+  }
+}
+
+// Bước 3a: Đọc log từ các container đã lọc
+loki.source.docker "postgres" {
+  host             = "unix:///var/run/docker.sock"
+  targets          = discovery.relabel.postgres_filter.output
+  forward_to       = [loki.process.postgresql.receiver]
+  labels           = {"job" = "postgresql"}
+  refresh_interval = "5s"
+}
+
+loki.process "postgresql" {
+  stage.docker { }
+
+  // Stage 1: Multiline - Combine SQL queries that span multiple lines
+  stage.multiline {
+    firstline     = "^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}"
+    max_wait_time = "3s"
+  }
+
+  // Stage 2: Regex - Parse PostgreSQL log format
+  // Lưu ý: Regex này khớp với log_line_prefix trong docker-compose
+  stage.regex {
+    expression = "^(?P<timestamp>\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)? \\w+) \\[(?P<pid>\\d+)\\]: \\[(?P<line_num>\\d+-\\d+)\\] user=(?P<user>[^,]*),db=(?P<database>[^,]*),app=(?P<application>[^,]*),client=(?P<client>[^ ]*) (?P<level>\\w+):\\s+(?P<message>.*)"
+  }
+
+
+  // Stage 3: Labels - Extract labels from parsed fields
+  stage.labels {
+    values = {
+      user        = "",
+      database    = "",
+      application = "",
+      level       = "",
+    }
+  }
+
+  // Stage 4: Template - Clean up application name
+  stage.template {
+    source   = "application"
+    template = "{{ if eq .Value \"[unknown]\" }}undefined{{ else }}{{ .Value }}{{ end }}"
+  }
+
+  // Stage 5: Timestamp - Parse timestamp inside the log message
+  stage.timestamp {
+    source = "timestamp"
+    format = "2006-01-02 15:04:05 MST"
+  }
+
+  // Stage 6: Output - Set final log message
+  stage.output {
+    source = "message"
+  }
+
+  // Stage 7: Static labels
+  stage.static_labels {
+    values = {
+      service_name = env("POSTGRES_SERVICE_NAME"),
+      db_type      = "postgres",
+      host         = env("DB_HOST"),
+      instance     = env("ENVIRONMENT"),
+    }
+  }
+
+  forward_to = [loki.write.loki_endpoint.receiver]
+}
+
+// ============================================================================
+// MONGODB PIPELINE
+// ============================================================================
+
+// Bước 2b: Lọc lấy Container có tên chứa chữ "mongo"
+discovery.relabel "mongodb_filter" {
+  targets = discovery.docker.all_containers.targets
+
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex         = "/?.*mongo.*"
+    action        = "keep"
+  }
+}
+
+// Bước 3b: Đọc log từ các container đã lọc
+loki.source.docker "mongodb" {
+  host             = "unix:///var/run/docker.sock"
+  targets          = discovery.relabel.mongodb_filter.output
+  forward_to       = [loki.process.mongodb.receiver]
+  labels           = {"job" = "mongodb"}
+  refresh_interval = "5s"
+}
+
+loki.process "mongodb" {
+  stage.docker { }
+
+  // Stage 1: JSON - Parse MongoDB JSON logs (Nested JSON)
+  stage.json {
+    expressions = {
+      timestamp = "t.\"$date\"",
+      severity  = "s",
+      component = "c",
+      context   = "ctx",
+      message   = "msg",
+      attr      = "attr",
+    }
+  }
+
+  // Stage 2: Labels - Extract labels
+  stage.labels {
+    values = {
+      severity  = "",
+      component = "",
+    }
+  }
+
+  // Stage 3: Timestamp - Parse MongoDB timestamp
+  stage.timestamp {
+    source = "timestamp"
+    format = "RFC3339"
+  }
+
+  // Stage 4: Output - Set final log message
+  stage.output {
+    source = "message"
+  }
+
+  // Stage 5: Static labels
+  stage.static_labels {
+    values = {
+      service_name = env("MONGODB_SERVICE_NAME"),
+      db_type      = "mongodb",
+      host         = env("DB_HOST"),
+      instance     = env("ENVIRONMENT"),
+    }
+  }
+
+  forward_to = [loki.write.loki_endpoint.receiver]
+}

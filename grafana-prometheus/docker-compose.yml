@@ -29,6 +29,13 @@ services:
     restart: unless-stopped
     networks:
       - monitoring
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '2'
+        reservations:
+          memory: 512M
 
   loki:
     image: grafana/loki:latest
@@ -95,29 +102,6 @@ services:
     restart: unless-stopped
     networks:
       - monitoring
-
-  mongodb-exporter-ptit:
-    image: percona/mongodb_exporter:0.40
-    container_name: mongodb-exporter-ptit
-    command:
-      - "--mongodb.uri=${MONGODB_URI_PTIT}"
-      - "--collect-all"
-      - "--compatible-mode"
-      - "--collector.replicasetstatus"
-    networks:
-      - monitoring
-    restart: unless-stopped
-
-  postgres-ptit:
-    image: bitnami/postgres-exporter
-    container_name: postgres-exporter-ptit
-    environment:
-      - DATA_SOURCE_NAME=${POSTGRES_DSN_PTIT}
-      - PG_EXPORTER_AUTO_DISCOVER_DATABASES=true
-      - PG_EXPORTER_EXCLUDE_DATABASES=template0,template1
-    networks:
-      - monitoring
-    restart: unless-stopped
 
   minio:
     image: minio/minio:latest
