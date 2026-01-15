@@ -1,78 +1,287 @@
 # System Monitor (LGTM Stack)
 
-This project provides a comprehensive monitoring solution based on the **LGTM Stack** (Loki, Grafana, Tempo, Prometheus) combined with OpenTelemetry. It is designed to monitor system metrics, application traces, logs, and database performance (MongoDB, PostgreSQL).
+Hệ thống giám sát toàn diện dựa trên **LGTM Stack** (Loki, Grafana, Tempo, Mimir) kết hợp với **Grafana Alloy**. Được thiết kế để giám sát metrics hệ thống, application traces, logs, và hiệu suất database (MongoDB, PostgreSQL).
 
-## Architecture
+## Kiến trúc hệ thống
 
-The system consists of the following core components:
+### Core Components
 
-| Component | Function | Port |
-|-----------|----------|------|
-| **Grafana** | Visualization & Dashboarding | `3000` |
-| **Prometheus** | Metrics Collection & Storage | `9090` |
-| **Mimir** | Long-term Metrics Storage | `9009` |
-| **MinIO** | S3-compatible Object Storage | `9000`, `9001` |
-| **Loki** | Log Aggregation | `3100` |
-| **Tempo** | Distributed Tracing | `3200` |
-| **Alertmanager** | Alerting (Telegram integrated) | `9093` |
-| **Otel Collector**| OpenTelemetry Receiver (Traces/Metrics)| `4317` (gRPC), `4318` (HTTP) |
-| **Promtail** | Log Shipper (Docker & System logs) | N/A |
+| Component | Chức năng | Port | Ghi chú |
+|-----------|-----------|------|---------|
+| **Grafana** | Visualization & Dashboarding | `3000` | Giao diện trực quan hóa dữ liệu |
+| **Prometheus** | Metrics Collection & Storage | `9090` | Thu thập metrics ngắn hạn |
+| **Mimir** | Long-term Metrics Storage | `9009` | Lưu trữ metrics dài hạn |
+| **MinIO** | S3-compatible Object Storage | `9000`, `9001` | Object storage cho Mimir & Tempo |
+| **Loki** | Log Aggregation | `3100` | Thu thập và lưu trữ logs |
+| **Tempo** | Distributed Tracing | `3200` | Distributed tracing backend |
+| **Pyroscope** | Continuous Profiling | `4040` | Profiling ứng dụng |
+| **Alertmanager** | Alerting System | `9093` | Cảnh báo qua Telegram |
+| **Grafana Alloy** | Unified Observability Agent | `4317`, `4318`, `12345` | **Thay thế Promtail + OTel Collector** |
+| **Node Exporter** | Host Metrics Exporter | `9100` | Metrics của monitoring server |
 
-### Database Exporters
-- **MongoDB Exporters**: Monitor MongoDB clusters.
-- **Postgres Exporters**: Monitor PostgreSQL databases.
+### Grafana Alloy - Unified Agent
+
+**Grafana Alloy** là agent thống nhất thay thế cho **Promtail** và **OpenTelemetry Collector**, cung cấp:
+
+#### Logs Collection (thay thế Promtail)
+- **Docker Logs**: Tự động thu thập logs từ tất cả containers qua Docker socket
+- **System Logs**: Thu thập logs từ `/var/log/*.log`
+- **Exporter Logs**: Thu thập riêng logs của các exporters
+- **Log Processing**: Lọc logs lỗi, logs cũ, và corrupted logs
+
+#### Traces Collection (thay thế OTel Collector)
+- **OTLP gRPC**: Port `4317` - nhận traces từ applications
+- **OTLP HTTP**: Port `4318` - nhận traces qua HTTP
+- **Memory Limiter**: Giới hạn 400MiB để tránh OOM
+- **Batch Processing**: Tối ưu hiệu suất với batching
+
+#### Self-Monitoring
+- **Port `12345`**: Alloy metrics endpoint
+- Tự động gửi metrics của chính nó về Prometheus
+
+### Database Monitoring
+
+#### MongoDB Exporters
+- Giám sát MongoDB clusters
+- Metrics: connections, operations, replication, storage
+
+#### PostgreSQL Exporters  
+- Giám sát PostgreSQL databases
+- Metrics: connections, queries, locks, replication
 
 ## Getting Started
 
-### 1. Configuration (Dynamic)
-
-This project has been refactored to use **Environment Variables** and **External Files** for all sensitive or changeable configurations. You do **not** need to modify the core `docker-compose.yml` or `prometheus.yml` for standard operations.
+### 1. Cấu hình môi trường
 
 #### Environment Variables (`.env`)
-The project now uses a **single unified `.env` file** at the project root (`d:\devops\monitor\.env`).
-All services (Grafana, Exporters, Alertmanager) read from this file.
 
-**`d:\devops\monitor\.env`**:
+Tạo file `.env` trong thư mục `grafana-prometheus/`:
+
+```bash
+cp .env.example .env
+```
+
+Chỉnh sửa file `.env`:
+
 ```env
 # Database Connection Strings
-MONGODB_URI_VWA=...
-MONGODB_URI_PTIT=...
-POSTGRES_DSN_VWA=...
-POSTGRES_DSN_PTIT=...
+MONGODB_URI_PTIT=mongodb://user:password@host:27017/admin
+POSTGRES_DSN_PTIT=postgresql://user:password@host:5432/dbname?sslmode=disable
 
-# Grafana & Alerts
-GRAFANA_PASSWORD=admin
+# Grafana Admin Password
+GRAFANA_PASSWORD=your_secure_password
+
+# Alertmanager Configuration
 ALERTMANAGER_URL=http://localhost:9093
-TELEGRAM_BOT_TOKEN=...
-TELEGRAM_CHAT_ID=...
+TELEGRAM_BOT_TOKEN=your_telegram_bot_token
+TELEGRAM_CHAT_ID=your_telegram_chat_id
+
+# MinIO Credentials (for Mimir & Tempo storage)
+MINIO_ROOT_USER=mimir
+MINIO_ROOT_PASSWORD=mimir123
 ```
 
 #### Monitoring Targets (JSON)
-To add or remove monitored servers, edit the JSON files in `grafana-prometheus/prometheus/`:
-- **Node Exporter**: `targets.json`
-- **Nginx**: `nginx_targets.json`
-- **Cadvisor**: `cadvisor_targets.json`
 
-*Changes to these files are picked up automatically by Prometheus (File-based Service Discovery).*
+Để thêm/xóa servers cần giám sát, chỉnh sửa các file JSON trong `grafana-prometheus/prometheus/`:
 
-### 2. Running the Stack
+**Node Exporter** (`targets.node.json`):
+```json
+[
+  {
+    "targets": ["192.168.1.10:9100", "192.168.1.11:9100"],
+    "labels": {
+      "environment": "production",
+      "role": "web-server"
+    }
+  }
+]
+```
 
-Navigate to the main directory and start the services:
+**Nginx** (`targets.nginx.json`):
+```json
+[
+  {
+    "targets": ["192.168.1.10:9113"],
+    "labels": {
+      "environment": "production"
+    }
+  }
+]
+```
+
+**cAdvisor** (`targets.cadvisor.json`):
+```json
+[
+  {
+    "targets": ["192.168.1.10:8080"],
+    "labels": {
+      "environment": "production"
+    }
+  }
+]
+```
+
+**MongoDB** (`targets.mongodb.json`):
+```json
+[
+  {
+    "targets": ["mongodb-exporter-ptit:9216"],
+    "labels": {
+      "cluster": "ptit",
+      "environment": "production"
+    }
+  }
+]
+```
+
+**PostgreSQL** (`targets.postgres.json`):
+```json
+[
+  {
+    "targets": ["postgres-exporter-ptit:9187"],
+    "labels": {
+      "cluster": "ptit",
+      "environment": "production"
+    }
+  }
+]
+```
+
+> **Lưu ý**: Prometheus tự động reload cấu hình khi các file JSON thay đổi (File-based Service Discovery).
+
+### 2. Khởi động Stack
 
 ```bash
 cd grafana-prometheus
 docker-compose up -d
 ```
 
-To view the logs:
+Kiểm tra logs:
 ```bash
 docker-compose logs -f
 ```
 
+Kiểm tra trạng thái:
+```bash
+docker-compose ps
+```
+
+### 3. Truy cập Services
+
+| Service | URL | Credentials |
+|---------|-----|-------------|
+| Grafana | http://localhost:3000 | admin / `${GRAFANA_PASSWORD}` |
+| Prometheus | http://localhost:9090 | - |
+| Alertmanager | http://localhost:9093 | - |
+| MinIO Console | http://localhost:9001 | mimir / mimir123 |
+| Alloy UI | http://localhost:12345 | - |
+
 ## Data Flow
 
-1.  **Metrics**: Scraped by Prometheus from exporters defined in `*.json` files or static targets in `docker-compose`.
-2.  **Logs**:
-    - **Docker Containers**: Automatically collected by Promtail via socket.
-    - **Apps**: Can push directly to Loki.
-3.  **Traces**: Applications push traces to **Otel Collector** or **Tempo** on ports `4317`/`4318`.
+### 1. Metrics Flow
+```
+Exporters (Node/Nginx/DB) 
+  → Prometheus (scrape every 15s)
+  → Mimir (long-term storage via remote_write)
+  → Grafana (visualization)
+```
+
+### 2. Logs Flow
+```
+Docker Containers / System Logs
+  → Grafana Alloy (collection & processing)
+  → Loki (storage & indexing)
+  → Grafana (visualization & search)
+```
+
+### 3. Traces Flow
+```
+Applications (OTLP)
+  → Grafana Alloy (port 4317/4318)
+  → Tempo (storage in MinIO)
+  → Grafana (visualization & analysis)
+```
+
+### 4. Alerts Flow
+```
+Prometheus (evaluate rules)
+  → Alertmanager (routing & grouping)
+  → Telegram (notifications)
+```
+
+## Quản lý và Bảo trì
+
+### Xem logs của một service cụ thể
+```bash
+docker-compose logs -f alloy
+docker-compose logs -f prometheus
+docker-compose logs -f loki
+```
+
+### Restart một service
+```bash
+docker-compose restart alloy
+docker-compose restart prometheus
+```
+
+### Reload Prometheus configuration
+```bash
+curl -X POST http://localhost:9090/-/reload
+```
+
+### Kiểm tra Alloy configuration
+```bash
+docker exec alloy alloy fmt /etc/alloy/config.alloy
+```
+
+### Backup dữ liệu
+```bash
+# Backup Grafana dashboards
+docker exec grafana grafana-cli admin export-dashboard
+
+# Backup Prometheus data
+docker run --rm -v prometheus-data:/data -v $(pwd):/backup alpine tar czf /backup/prometheus-backup.tar.gz /data
+```
+
+## Alert Rules
+
+Hệ thống có sẵn các alert rules cho:
+
+- **Node Exporter**: CPU, Memory, Disk, Network
+- **Docker**: Container down, high resource usage
+- **MongoDB**: Replication lag, connections, operations
+- **PostgreSQL**: Connections, locks, replication
+- **Nginx**: High error rate, response time
+- **LGTM Stack**: Service down, high resource usage
+
+Xem chi tiết tại: `grafana-prometheus/prometheus/rules.*.yml`
+
+## 🔍 Troubleshooting
+
+### Alloy không thu thập được logs
+```bash
+# Kiểm tra Alloy có quyền truy cập Docker socket
+docker exec alloy ls -la /var/run/docker.sock
+
+# Xem Alloy logs
+docker-compose logs -f alloy
+```
+
+### Prometheus không scrape được targets
+```bash
+# Kiểm tra targets status
+curl http://localhost:9090/api/v1/targets
+
+# Kiểm tra file JSON targets
+cat grafana-prometheus/prometheus/targets.node.json
+```
+
+### Mimir không nhận được metrics
+```bash
+# Kiểm tra remote write status
+curl http://localhost:9090/api/v1/status/tsdb
+
+# Kiểm tra Mimir logs
+docker-compose logs -f mimir
+```
