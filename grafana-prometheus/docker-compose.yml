@@ -77,10 +77,12 @@ services:
       - loki
 
   pyroscope:
-    image: pyroscope/pyroscope:latest
+    image: grafana/pyroscope:latest
     container_name: pyroscope
     command:
       - "server"
+    ports:
+      - "4040:4040"
     restart: unless-stopped
     networks:
       - monitoring
