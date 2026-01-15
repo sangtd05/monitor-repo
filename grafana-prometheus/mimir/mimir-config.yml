@@ -12,7 +12,7 @@ blocks_storage:
   
   tsdb:
     dir: /data/mimir/tsdb
-    retention_period: 24h
+    retention_period: 72h
   
   bucket_store:
     sync_dir: /data/mimir/tsdb-sync
