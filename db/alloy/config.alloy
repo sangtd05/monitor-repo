@@ -42,11 +42,12 @@ loki.source.docker "postgres" {
 loki.process "postgresql" {
   stage.docker { }
 
-  // Stage 0: Drop exporter logs (only keep PostgreSQL DB logs)
-  stage.drop {
-    source = ""
-    expression = "time=.*level=(INFO|ERROR).*source=.*msg=.*"
-  }
+  	// Stage 0: Drop exporter logs (only keep PostgreSQL DB logs)
+	// Exporter format: time=2026-01-15T06:47:47.997Z level=INFO source=postgres_exporter.go
+	stage.drop {
+		source     = ""
+		expression = "^time=.*level=(INFO|ERROR|WARN|DEBUG).*source=.*\\.go.*msg=.*"
+	}
 
   // Stage 1: Multiline - Combine SQL queries that span multiple lines
   stage.multiline {
@@ -126,11 +127,12 @@ loki.source.docker "mongodb" {
 loki.process "mongodb" {
   stage.docker { }
 
-  // Stage 0: Drop exporter logs (only keep MongoDB DB logs)
-  stage.drop {
-    source = ""
-    expression = "time=.*level=(INFO|ERROR).*source=.*msg=.*"
-  }
+  	// Stage 0: Drop exporter logs (only keep MongoDB DB logs)
+	// Exporter format: time=2026-01-15T06:34:00.449Z level=ERROR source=exporter.go
+	stage.drop {
+		source     = ""
+		expression = "^time=.*level=(INFO|ERROR|WARN|DEBUG).*source=.*\\.go.*msg=.*"
+	}
 
   // Stage 1: JSON - Parse MongoDB JSON logs (Nested JSON)
   stage.json {
