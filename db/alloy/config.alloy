@@ -1,26 +1,13 @@
-// Grafana Alloy configuration for Database Logs (Docker Socket Version)
-// Collects PostgreSQL and MongoDB logs from Docker Socket and sends to Loki
-
-// ============================================================================
-// LOKI CLIENT - Send logs to Loki
-// ============================================================================
 loki.write "loki_endpoint" {
   endpoint {
     url = env("LOKI_URL")
   }
 }
 
-// ============================================================================
-// DOCKER DISCOVERY (Common Source)
-// ============================================================================
 discovery.docker "all_containers" {
   host = "unix:///var/run/docker.sock"
 }
 
-// ============================================================================
-// POSTGRESQL PIPELINE
-// ============================================================================
-// Lọc container PostgreSQL (hardcoded để tránh env() deprecation)
 discovery.relabel "postgres_filter" {
   targets = discovery.docker.all_containers.targets
 
@@ -42,27 +29,20 @@ loki.source.docker "postgres" {
 loki.process "postgresql" {
   stage.docker { }
 
-  	// Stage 0: Drop exporter logs (only keep PostgreSQL DB logs)
-	// Exporter format: time=2026-01-15T06:47:47.997Z level=INFO source=postgres_exporter.go
 	stage.drop {
 		source     = ""
 		expression = "^time=.*level=(INFO|ERROR|WARN|DEBUG).*source=.*\\.go.*msg=.*"
 	}
 
-  // Stage 1: Multiline - Combine SQL queries that span multiple lines
   stage.multiline {
     firstline     = "^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}"
     max_wait_time = "3s"
   }
 
-  // Stage 2: Regex - Parse PostgreSQL log format
-  // Lưu ý: Regex này khớp với log_line_prefix trong docker-compose
   stage.regex {
     expression = "^(?P<timestamp>\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)? \\w+) \\[(?P<pid>\\d+)\\]: \\[(?P<line_num>\\d+-\\d+)\\] user=(?P<user>[^,]*),db=(?P<database>[^,]*),app=(?P<application>[^,]*),client=(?P<client>[^ ]*) (?P<level>\\w+):\\s+(?P<message>.*)"
   }
 
-
-  // Stage 3: Labels - Extract labels from parsed fields
   stage.labels {
     values = {
       user        = "",
@@ -72,24 +52,20 @@ loki.process "postgresql" {
     }
   }
 
-  // Stage 4: Template - Clean up application name
   stage.template {
     source   = "application"
     template = "{{ if eq .Value \"[unknown]\" }}undefined{{ else }}{{ .Value }}{{ end }}"
   }
 
-  // Stage 5: Timestamp - Parse timestamp inside the log message
   stage.timestamp {
     source = "timestamp"
     format = "2006-01-02 15:04:05 MST"
   }
 
-  // Stage 6: Output - Set final log message
   stage.output {
     source = "message"
   }
 
-  // Stage 7: Static labels
   stage.static_labels {
     values = {
       service_name = env("POSTGRES_SERVICE_NAME"),
@@ -102,10 +78,6 @@ loki.process "postgresql" {
   forward_to = [loki.write.loki_endpoint.receiver]
 }
 
-// ============================================================================
-// MONGODB PIPELINE
-// ============================================================================
-// Lọc container MongoDB (hardcoded để tránh env() deprecation)
 discovery.relabel "mongodb_filter" {
   targets = discovery.docker.all_containers.targets
 
@@ -127,14 +99,11 @@ loki.source.docker "mongodb" {
 loki.process "mongodb" {
   stage.docker { }
 
-  	// Stage 0: Drop exporter logs (only keep MongoDB DB logs)
-	// Exporter format: time=2026-01-15T06:34:00.449Z level=ERROR source=exporter.go
 	stage.drop {
 		source     = ""
 		expression = "^time=.*level=(INFO|ERROR|WARN|DEBUG).*source=.*\\.go.*msg=.*"
 	}
 
-  // Stage 1: JSON - Parse MongoDB JSON logs (Nested JSON)
   stage.json {
     expressions = {
       timestamp = "t.\"$date\"",
@@ -146,7 +115,6 @@ loki.process "mongodb" {
     }
   }
 
-  // Stage 2: Labels - Extract labels
   stage.labels {
     values = {
       severity  = "",
@@ -154,13 +122,11 @@ loki.process "mongodb" {
     }
   }
 
-  // Stage 3: Timestamp - Parse MongoDB timestamp
   stage.timestamp {
     source = "timestamp"
     format = "RFC3339"
   }
 
-  // Stage 4: Output - Combine message with attributes for context
   stage.template {
     source   = "message"
     template = "{{ .Value }}{{ if .attr }} | {{ .attr }}{{ end }}"
@@ -170,7 +136,6 @@ loki.process "mongodb" {
     source = "message"
   }
 
-  // Stage 5: Static labels
   stage.static_labels {
     values = {
       service_name = env("MONGODB_SERVICE_NAME"),
