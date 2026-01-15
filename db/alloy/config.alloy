@@ -13,7 +13,6 @@ loki.write "loki_endpoint" {
 // ============================================================================
 // DOCKER DISCOVERY (Common Source)
 // ============================================================================
-// Bước 1: Kết nối vào Docker Socket để tìm tất cả container
 discovery.docker "all_containers" {
   host = "unix:///var/run/docker.sock"
 }
@@ -22,18 +21,16 @@ discovery.docker "all_containers" {
 // POSTGRESQL PIPELINE
 // ============================================================================
 
-// Bước 2a: Lọc lấy Container có tên chứa chữ "postgres"
 discovery.relabel "postgres_filter" {
   targets = discovery.docker.all_containers.targets
 
   rule {
     source_labels = ["__meta_docker_container_name"]
-    regex         = "/?.*postgres.*"  // Regex bắt tên container (có thể có dấu / ở đầu)
+    regex         = format("/?%s", env("POSTGRES_CONTAINER_NAME"))
     action        = "keep"
   }
 }
 
-// Bước 3a: Đọc log từ các container đã lọc
 loki.source.docker "postgres" {
   host             = "unix:///var/run/docker.sock"
   targets          = discovery.relabel.postgres_filter.output
@@ -108,18 +105,16 @@ loki.process "postgresql" {
 // MONGODB PIPELINE
 // ============================================================================
 
-// Bước 2b: Lọc lấy Container có tên chứa chữ "mongo"
 discovery.relabel "mongodb_filter" {
   targets = discovery.docker.all_containers.targets
 
   rule {
     source_labels = ["__meta_docker_container_name"]
-    regex         = "/?.*mongo.*"
+    regex         = format("/?%s", env("MONGODB_CONTAINER_NAME"))
     action        = "keep"
   }
 }
 
-// Bước 3b: Đọc log từ các container đã lọc
 loki.source.docker "mongodb" {
   host             = "unix:///var/run/docker.sock"
   targets          = discovery.relabel.mongodb_filter.output
