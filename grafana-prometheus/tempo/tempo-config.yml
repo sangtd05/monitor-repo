@@ -43,31 +43,28 @@ storage:
       max_workers: 50
       queue_depth: 2000
 
-# metrics_generator:
-#   registry:
-#     external_labels:
-#       source: tempo
-#       cluster: docker-compose
-#   storage:
-#     path: /var/tempo/generator/wal
-#     remote_write:
-#       - url: http://prometheus:9090/api/v1/write
-#         send_exemplars: true
-#   processor:
-#     service_graphs:
-#       max_items: 10000
-#       wait: 10s
-#     span_metrics:
-#       dimensions:
-#         - http.method
-#         - http.status_code
-#         - service.name
-#         - http.route
-#         - span.kind
-#     local_blocks:
-#       max_live_traces: 10000
-#       max_block_duration: 30s
+metrics_generator:
+  registry:
+    external_labels:
+      source: tempo
+      cluster: docker-compose
+  storage:
+    path: /var/tempo/generator/wal
+    remote_write:
+      - url: http://prometheus:9090/api/v1/write
+        send_exemplars: true
+  processor:
+    service_graphs:
+      max_items: 5000
+      wait: 15s
+    span_metrics:
+      dimensions:
+        - http.method
+        - http.status_code
+        - service.name
+        - http.route
+        - span.kind
 
 overrides:
   max_bytes_per_trace: 30000000
-#   metrics_generator_processors: [service-graphs, span-metrics, local-blocks]
+  metrics_generator_processors: [service-graphs, span-metrics]
