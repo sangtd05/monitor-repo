@@ -9,6 +9,7 @@ rule_files:
   - "/etc/prometheus/rules.nginx.yml"
   - "/etc/prometheus/rules.docker.yml"
   - "/etc/prometheus/rules.lgtm-stack.yml"
+  - "/etc/prometheus/rules.tempo-alerts.yml"
 
 scrape_configs:
   - job_name: "prometheus"

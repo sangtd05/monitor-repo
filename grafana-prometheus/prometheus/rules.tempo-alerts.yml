@@ -1,0 +1,229 @@
+groups:
+  - name: RED metrics
+    interval: 30s
+    rules:
+      - alert: HighServiceLatencyP95
+        expr: |
+          histogram_quantile(0.95, 
+            sum by (service_name, le) (
+              rate(traces_spanmetrics_latency_bucket[5m])
+            )
+          ) > 1
+        for: 5m
+        labels:
+          severity: warning
+          component: tempo
+          alert_type: performance
+        annotations:
+          summary: "High P95 latency for service {{ $labels.service_name }}"
+          description: "Service {{ $labels.service_name }} has P95 latency of {{ $value | humanizeDuration }} (threshold: 1s)"
+          dashboard: "tempo-span-metrics-red"
+
+      - alert: CriticalServiceLatencyP95
+        expr: |
+          histogram_quantile(0.95, 
+            sum by (service_name, le) (
+              rate(traces_spanmetrics_latency_bucket[5m])
+            )
+          ) > 5
+        for: 2m
+        labels:
+          severity: critical
+          component: tempo
+          alert_type: performance
+        annotations:
+          summary: "Critical P95 latency for service {{ $labels.service_name }}"
+          description: "Service {{ $labels.service_name }} has critical P95 latency of {{ $value | humanizeDuration }} (threshold: 5s)"
+          dashboard: "tempo-span-metrics-red"
+
+      - alert: HighServiceLatencyP99
+        expr: |
+          histogram_quantile(0.99, 
+            sum by (service_name, le) (
+              rate(traces_spanmetrics_latency_bucket[5m])
+            )
+          ) > 3
+        for: 5m
+        labels:
+          severity: warning
+          component: tempo
+          alert_type: performance
+        annotations:
+          summary: "High P99 latency for service {{ $labels.service_name }}"
+          description: "Service {{ $labels.service_name }} has P99 latency of {{ $value | humanizeDuration }} (threshold: 3s)"
+          dashboard: "tempo-span-metrics-red"
+
+      - alert: HighServiceErrorRate
+        expr: |
+          (
+            sum by (service_name) (
+              rate(traces_spanmetrics_calls_total{status_code="STATUS_CODE_ERROR"}[5m])
+            )
+            /
+            sum by (service_name) (
+              rate(traces_spanmetrics_calls_total[5m])
+            )
+          ) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+          component: tempo
+          alert_type: reliability
+        annotations:
+          summary: "High error rate for service {{ $labels.service_name }}"
+          description: "Service {{ $labels.service_name }} has error rate of {{ $value | humanizePercentage }} (threshold: 5%)"
+          dashboard: "tempo-span-metrics-red"
+
+      - alert: CriticalServiceErrorRate
+        expr: |
+          (
+            sum by (service_name) (
+              rate(traces_spanmetrics_calls_total{status_code="STATUS_CODE_ERROR"}[5m])
+            )
+            /
+            sum by (service_name) (
+              rate(traces_spanmetrics_calls_total[5m])
+            )
+          ) > 0.20
+        for: 2m
+        labels:
+          severity: critical
+          component: tempo
+          alert_type: reliability
+        annotations:
+          summary: "Critical error rate for service {{ $labels.service_name }}"
+          description: "Service {{ $labels.service_name }} has critical error rate of {{ $value | humanizePercentage }} (threshold: 20%)"
+          dashboard: "tempo-span-metrics-red"
+
+      - alert: HighEndpointLatency
+        expr: |
+          histogram_quantile(0.95, 
+            sum by (service_name, span_name, le) (
+              rate(traces_spanmetrics_latency_bucket[5m])
+            )
+          ) > 2
+        for: 10m
+        labels:
+          severity: warning
+          component: tempo
+          alert_type: performance
+        annotations:
+          summary: "High latency for endpoint {{ $labels.span_name }} in {{ $labels.service_name }}"
+          description: "Endpoint {{ $labels.span_name }} in service {{ $labels.service_name }} has P95 latency of {{ $value | humanizeDuration }} (threshold: 2s)"
+          dashboard: "tempo-endpoint-performance"
+
+      - alert: ServiceRequestRateSpike
+        expr: |
+          (
+            sum by (service_name) (
+              rate(traces_spanmetrics_calls_total[5m])
+            )
+            /
+            sum by (service_name) (
+              rate(traces_spanmetrics_calls_total[1h] offset 1h)
+            )
+          ) > 2
+        for: 5m
+        labels:
+          severity: info
+          component: tempo
+          alert_type: traffic
+        annotations:
+          summary: "Request rate spike for service {{ $labels.service_name }}"
+          description: "Service {{ $labels.service_name }} request rate increased by {{ $value | humanizePercentage }} compared to 1 hour ago"
+          dashboard: "tempo-span-metrics-red"
+
+      - alert: ServiceRequestRateDrop
+        expr: |
+          (
+            sum by (service_name) (
+              rate(traces_spanmetrics_calls_total[5m])
+            )
+            /
+            sum by (service_name) (
+              rate(traces_spanmetrics_calls_total[1h] offset 1h)
+            )
+          ) < 0.5
+        for: 10m
+        labels:
+          severity: warning
+          component: tempo
+          alert_type: traffic
+        annotations:
+          summary: "Request rate drop for service {{ $labels.service_name }}"
+          description: "Service {{ $labels.service_name }} request rate decreased by {{ $value | humanizePercentage }} compared to 1 hour ago"
+          dashboard: "tempo-span-metrics-red"
+
+      - alert: ServiceNoTraffic
+        expr: |
+          sum by (service_name) (
+            rate(traces_spanmetrics_calls_total[10m])
+          ) == 0
+        for: 15m
+        labels:
+          severity: warning
+          component: tempo
+          alert_type: availability
+        annotations:
+          summary: "No traffic for service {{ $labels.service_name }}"
+          description: "Service {{ $labels.service_name }} has received no requests in the last 15 minutes"
+          dashboard: "tempo-span-metrics-red"
+
+      - alert: HighInterServiceErrorRate
+        expr: |
+          (
+            sum by (client, server) (
+              rate(traces_service_graph_request_failed_total[5m])
+            )
+            /
+            sum by (client, server) (
+              rate(traces_service_graph_request_total[5m])
+            )
+          ) > 0.10
+        for: 5m
+        labels:
+          severity: warning
+          component: tempo
+          alert_type: reliability
+        annotations:
+          summary: "High error rate between {{ $labels.client }} and {{ $labels.server }}"
+          description: "Communication from {{ $labels.client }} to {{ $labels.server }} has error rate of {{ $value | humanizePercentage }} (threshold: 10%)"
+          dashboard: "tempo-service-graph"
+
+      - alert: HighHTTP5xxRate
+        expr: |
+          (
+            sum by (service_name) (
+              rate(traces_spanmetrics_calls_total{http_status_code=~"5.."}[5m])
+            )
+            /
+            sum by (service_name) (
+              rate(traces_spanmetrics_calls_total[5m])
+            )
+          ) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+          component: tempo
+          alert_type: reliability
+        annotations:
+          summary: "High HTTP 5xx error rate for {{ $labels.service_name }}"
+          description: "Service {{ $labels.service_name }} has HTTP 5xx error rate of {{ $value | humanizePercentage }} (threshold: 5%)"
+          dashboard: "tempo-span-metrics-red"
+
+      - alert: SlowEndpoint
+        expr: |
+          histogram_quantile(0.95, 
+            sum by (service_name, span_name, http_method, le) (
+              rate(traces_spanmetrics_latency_bucket{span_name!=""}[5m])
+            )
+          ) > 5
+        for: 10m
+        labels:
+          severity: warning
+          component: tempo
+          alert_type: performance
+        annotations:
+          summary: "Slow endpoint detected: {{ $labels.http_method }} {{ $labels.span_name }}"
+          description: "Endpoint {{ $labels.http_method }} {{ $labels.span_name }} in {{ $labels.service_name }} has P95 latency of {{ $value | humanizeDuration }}"
+          dashboard: "tempo-endpoint-performance"
