@@ -12,7 +12,7 @@ blocks_storage:
   
   tsdb:
     dir: /data/mimir/tsdb
-    retention_period: 72h
+    retention_period: 720h
   
   bucket_store:
     sync_dir: /data/mimir/tsdb-sync
@@ -40,7 +40,7 @@ limits:
   max_global_series_per_metric: 100000
   max_label_names_per_series: 50
   
-  compactor_blocks_retention_period: 90d
+  compactor_blocks_retention_period: 30d
 
 memberlist:
   join_members:

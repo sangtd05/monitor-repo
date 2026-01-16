@@ -10,4 +10,8 @@
       batch_send_deadline: 5s
       min_backoff: 30ms
       max_backoff: 5s
+    write_relabel_configs:
+      - source_labels: [__name__, job]
+        regex: 'otelcol_.*;alloy'
+        action: drop
 

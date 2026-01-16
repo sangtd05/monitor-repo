@@ -234,7 +234,7 @@ otelcol.processor.batch "default" {
   output {
     metrics = [otelcol.exporter.prometheus.otlp_metrics.input]
     traces  = [otelcol.exporter.otlp.tempo.input]
-    logs    = []
+    logs    = [otelcol.exporter.loki.otlp_logs.input]
   }
 }
 
@@ -248,6 +248,10 @@ prometheus.remote_write "otlp_metrics" {
   }
 }
 
+otelcol.exporter.loki "otlp_logs" {
+  forward_to = [loki.write.default.receiver]
+}
+
 otelcol.exporter.otlp "tempo" {
   client {
     endpoint = "tempo:4317"
@@ -257,15 +261,3 @@ otelcol.exporter.otlp "tempo" {
   }
 }
 
-prometheus.exporter.self "alloy" { }
-
-prometheus.scrape "alloy" {
-  targets    = prometheus.exporter.self.alloy.targets
-  forward_to = [prometheus.remote_write.alloy_metrics.receiver]
-}
-
-prometheus.remote_write "alloy_metrics" {
-  endpoint {
-    url = "http://prometheus:9090/api/v1/write"
-  }
-}
