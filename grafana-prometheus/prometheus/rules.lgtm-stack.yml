@@ -356,3 +356,179 @@ groups:
         annotations:
           summary: "Prometheus target scrape duplicate (instance {{ $labels.instance }})"
           description: "Prometheus has many samples rejected due to duplicate timestamps but different values\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+  - name: Tempo
+    rules:
+      - alert: TempoDown
+        expr: 'up{job="tempo"} == 0'
+        for: 1m
+        labels:
+          severity: critical
+          component: tempo
+        annotations:
+          summary: "Tempo down (instance {{ $labels.instance }})"
+          description: "Tempo is down - distributed tracing unavailable\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+      - alert: TempoHighMemoryUsage
+        expr: '(process_resident_memory_bytes{job="tempo"} / 1024 / 1024 / 1024) > 1.5'
+        for: 5m
+        labels:
+          severity: warning
+          component: tempo
+        annotations:
+          summary: "Tempo high memory usage (instance {{ $labels.instance }})"
+          description: "Tempo memory usage is above 1.5GB\n  VALUE = {{ $value }}GB\n  LABELS = {{ $labels }}"
+
+      - alert: TempoHighCPUUsage
+        expr: 'rate(process_cpu_seconds_total{job="tempo"}[5m]) > 0.8'
+        for: 10m
+        labels:
+          severity: warning
+          component: tempo
+        annotations:
+          summary: "Tempo high CPU usage (instance {{ $labels.instance }})"
+          description: "Tempo CPU usage is above 80%\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+      - alert: TempoRequestErrors
+        expr: 'sum(rate(tempo_request_duration_seconds_count{status_code=~"5.."}[5m])) by (route) > 0'
+        for: 5m
+        labels:
+          severity: critical
+          component: tempo
+        annotations:
+          summary: "Tempo request errors (route {{ $labels.route }})"
+          description: "Tempo is experiencing 5xx errors on {{ $labels.route }}\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+      - alert: TempoIngesterFlushErrors
+        expr: 'increase(tempo_ingester_flush_failed_retries_total[5m]) > 0'
+        for: 5m
+        labels:
+          severity: warning
+          component: tempo
+        annotations:
+          summary: "Tempo ingester flush errors"
+          description: "Tempo ingester is experiencing flush failures\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+  - name: Mimir
+    rules:
+      - alert: MimirDown
+        expr: 'up{job="mimir"} == 0'
+        for: 1m
+        labels:
+          severity: critical
+          component: mimir
+        annotations:
+          summary: "Mimir down (instance {{ $labels.instance }})"
+          description: "Mimir is down - long-term metrics storage unavailable\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+      - alert: MimirRequestErrors
+        expr: '100 * sum(rate(cortex_request_duration_seconds_count{status_code=~"5.."}[1m])) by (route) / sum(rate(cortex_request_duration_seconds_count[1m])) by (route) > 10'
+        for: 5m
+        labels:
+          severity: critical
+          component: mimir
+        annotations:
+          summary: "Mimir request errors (route {{ $labels.route }})"
+          description: "Mimir is experiencing high error rate (>10%) on {{ $labels.route }}\n  VALUE = {{ $value }}%\n  LABELS = {{ $labels }}"
+
+      - alert: MimirIngesterUnhealthy
+        expr: 'cortex_ring_members{state="Unhealthy", name="ingester"} > 0'
+        for: 5m
+        labels:
+          severity: critical
+          component: mimir
+        annotations:
+          summary: "Mimir ingester unhealthy"
+          description: "Mimir has {{ $value }} unhealthy ingesters\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+      - alert: MimirHighMemoryUsage
+        expr: '(process_resident_memory_bytes{job="mimir"} / 1024 / 1024 / 1024) > 2'
+        for: 5m
+        labels:
+          severity: warning
+          component: mimir
+        annotations:
+          summary: "Mimir high memory usage (instance {{ $labels.instance }})"
+          description: "Mimir memory usage is above 2GB\n  VALUE = {{ $value }}GB\n  LABELS = {{ $labels }}"
+
+      - alert: MimirHighCPUUsage
+        expr: 'rate(process_cpu_seconds_total{job="mimir"}[5m]) > 0.8'
+        for: 10m
+        labels:
+          severity: warning
+          component: mimir
+        annotations:
+          summary: "Mimir high CPU usage (instance {{ $labels.instance }})"
+          description: "Mimir CPU usage is above 80%\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+      - alert: MimirCompactorFailed
+        expr: 'increase(cortex_compactor_runs_failed_total[1h]) > 0'
+        for: 5m
+        labels:
+          severity: warning
+          component: mimir
+        annotations:
+          summary: "Mimir compactor failed"
+          description: "Mimir compactor has failed runs\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+      - alert: MimirIngesterReachingSeriesLimit
+        expr: 'cortex_ingester_memory_series / cortex_ingester_instance_limits{limit="max_series"} > 0.8'
+        for: 5m
+        labels:
+          severity: warning
+          component: mimir
+        annotations:
+          summary: "Mimir ingester reaching series limit"
+          description: "Mimir ingester is reaching series limit (>80%)\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+  - name: Alertmanager
+    rules:
+      - alert: AlertmanagerDown
+        expr: 'up{job="alertmanager"} == 0'
+        for: 1m
+        labels:
+          severity: critical
+          component: alertmanager
+        annotations:
+          summary: "Alertmanager down (instance {{ $labels.instance }})"
+          description: "Alertmanager is down - alerts won't be sent to Telegram\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+      - alert: AlertmanagerConfigReloadFailure
+        expr: 'alertmanager_config_last_reload_successful != 1'
+        for: 5m
+        labels:
+          severity: warning
+          component: alertmanager
+        annotations:
+          summary: "Alertmanager config reload failure (instance {{ $labels.instance }})"
+          description: "Alertmanager configuration reload failed\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+      - alert: AlertmanagerNotificationFailing
+        expr: 'rate(alertmanager_notifications_failed_total[5m]) > 0'
+        for: 5m
+        labels:
+          severity: critical
+          component: alertmanager
+        annotations:
+          summary: "Alertmanager notification failing (instance {{ $labels.instance }})"
+          description: "Alertmanager is failing to send notifications to Telegram\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+      - alert: AlertmanagerClusterDown
+        expr: 'alertmanager_cluster_members < 1'
+        for: 5m
+        labels:
+          severity: critical
+          component: alertmanager
+        annotations:
+          summary: "Alertmanager cluster down"
+          description: "Alertmanager cluster has no members\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+      - alert: AlertmanagerHighMemoryUsage
+        expr: '(process_resident_memory_bytes{job="alertmanager"} / 1024 / 1024) > 200'
+        for: 5m
+        labels:
+          severity: warning
+          component: alertmanager
+        annotations:
+          summary: "Alertmanager high memory usage (instance {{ $labels.instance }})"
+          description: "Alertmanager memory usage is above 200MB\n  VALUE = {{ $value }}MB\n  LABELS = {{ $labels }}"
