@@ -26,9 +26,13 @@ services:
     volumes:
       - ./tempo:/etc/tempo
       - tempo-data:/var/tempo
+    ports:
+      - "3200:3200"
     restart: unless-stopped
     networks:
       - monitoring
+    depends_on:
+      - minio-init
     deploy:
       resources:
         limits:
@@ -49,6 +53,8 @@ services:
     restart: unless-stopped
     networks:
       - monitoring
+    depends_on:
+      - minio-init
 
   alloy:
     image: grafana/alloy:latest
