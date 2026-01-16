@@ -604,6 +604,7 @@
     "templating": {
         "list": [
             {
+                "allValue": ".+",
                 "current": {
                     "selected": false,
                     "text": "All",
@@ -631,6 +632,7 @@
                 "type": "query"
             },
             {
+                "allValue": ".+",
                 "current": {
                     "selected": false,
                     "text": "All",
@@ -665,7 +667,7 @@
     },
     "timepicker": {},
     "timezone": "",
-    "title": "Tempo Endpoint Performance",
+    "title": "Performance",
     "uid": "tempo-endpoint-performance",
     "version": 1
 }
