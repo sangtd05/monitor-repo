@@ -16,34 +16,26 @@ receivers:
         chat_id: ${TELEGRAM_CHAT_ID}
         parse_mode: "HTML"
         message: |
-          {{ if eq .Status "firing" }}🔴 <b>CẢNH BÁO</b>{{ else }}✅ <b>ĐÃ GIẢI QUYẾT</b>{{ end }}
+          {{ define "__alert_severity" }}{{ if eq . "critical" }}🔴{{ else if eq . "warning" }}🟠{{ else }}🔵{{ end }}{{ end }}
+          {{ define "__alert_status" }}{{ if eq . "firing" }}🔥 FIRING{{ else }}✅ RESOLVED{{ end }}{{ end }}
           
-          <b>{{ .GroupLabels.alertname }}</b>
-          {{ if .CommonLabels.severity }}━━━━━━━━━━━━━━━━━━━━
-          📊 Mức độ: <code>{{ .CommonLabels.severity }}</code>{{ end }}
+          {{ template "__alert_status" .Status }} ({{ .Alerts | len }})
           
-          {{- if gt (len .Alerts) 5 }}
-          ⚠️ <i>{{ len .Alerts }} alerts - hiển thị 5 đầu tiên</i>
-          {{- end }}
+          {{ range .Alerts }}
+          {{ template "__alert_severity" .Labels.severity }} <b>{{ .Labels.alertname }}</b>{{ if .Labels.component }} [{{ .Labels.component }}]{{ end }}
+          {{ if .Annotations.summary }}<i>{{ .Annotations.summary }}</i>{{ end }}
+          {{ if .Annotations.description }}
+          {{ .Annotations.description | reReplaceAll "\\n  VALUE = .+" "" | reReplaceAll "\\n  LABELS = .+" "" }}{{ end }}
+          {{- if .Labels.instance }}
+          <b>Instance:</b> <code>{{ .Labels.instance }}</code>{{ end }}
+          {{- if .Labels.job }} | <b>Job:</b> <code>{{ .Labels.job }}</code>{{ end }}
+          {{- if .Labels.device }} | <b>Device:</b> <code>{{ .Labels.device }}</code>{{ end }}
+          {{- if .Labels.mountpoint }} | <b>Mount:</b> <code>{{ .Labels.mountpoint }}</code>{{ end }}
+          {{- if .Labels.database }} | <b>DB:</b> <code>{{ .Labels.database }}</code>{{ end }}
+          {{- if .Labels.datname }} | <b>Database:</b> <code>{{ .Labels.datname }}</code>{{ end }}
           
-          {{- range $index, $alert := .Alerts }}
-          {{- if lt $index 5 }}
-          
-          {{- if $alert.Annotations.summary }}
-          📝 {{ $alert.Annotations.summary }}
-          {{- end }}
-          {{- if $alert.Labels.instance }}
-          🖥 <code>{{ $alert.Labels.instance }}</code>
-          {{- end }}
-          {{- if $alert.Labels.device }}
-          💾 Device: <code>{{ $alert.Labels.device }}</code>
-          {{- end }}
-          {{- if $alert.Labels.mountpoint }}
-          📁 Mount: <code>{{ $alert.Labels.mountpoint }}</code>
-          {{- end }}
-          🕐 {{ ($alert.StartsAt.Add 25200e9).Format "15:04:05 - 02/01/2006" }}
-          {{- end }}
-          {{- end }}
+          <b>Started:</b> {{ .StartsAt.Add 25200e9 | date "15:04:05 02/01/2006" }}
+          {{ end }}
 
 inhibit_rules:
   - source_match:
