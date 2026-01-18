@@ -17,6 +17,7 @@ Hệ thống giám sát toàn diện dựa trên **LGTM Stack** (Loki, Grafana, 
 | **Pyroscope** | Continuous Profiling | `4040` | Profiling ứng dụng |
 | **Alertmanager** | Alerting System | `9093` | Cảnh báo qua Telegram |
 | **Grafana Alloy** | Unified Observability Agent | `4317`, `4318`, `12345` | **Thay thế Promtail + OTel Collector** |
+| **Blackbox Exporter** | Synthetic Monitoring | `9115` | Health checks cho services |
 | **Node Exporter** | Host Metrics Exporter | `9100` | Metrics của monitoring server |
 
 ### Grafana Alloy - Unified Agent
@@ -83,9 +84,9 @@ MINIO_ROOT_PASSWORD=mimir123
 
 #### Monitoring Targets (JSON)
 
-Để thêm/xóa servers cần giám sát, chỉnh sửa các file JSON trong `grafana-prometheus/prometheus/`:
+Để thêm/xóa servers cần giám sát, chỉnh sửa các file JSON trong `grafana-prometheus/prometheus/targets/`:
 
-**Node Exporter** (`targets.node.json`):
+**Node Exporter** (`targets/node.json`):
 ```json
 [
   {
@@ -98,7 +99,7 @@ MINIO_ROOT_PASSWORD=mimir123
 ]
 ```
 
-**Nginx** (`targets.nginx.json`):
+**Nginx** (`targets/nginx.json`):
 ```json
 [
   {
@@ -110,7 +111,7 @@ MINIO_ROOT_PASSWORD=mimir123
 ]
 ```
 
-**cAdvisor** (`targets.cadvisor.json`):
+**cAdvisor** (`targets/cadvisor.json`):
 ```json
 [
   {
@@ -122,7 +123,7 @@ MINIO_ROOT_PASSWORD=mimir123
 ]
 ```
 
-**MongoDB** (`targets.mongodb.json`):
+**MongoDB** (`targets/mongodb.json`):
 ```json
 [
   {
@@ -135,7 +136,7 @@ MINIO_ROOT_PASSWORD=mimir123
 ]
 ```
 
-**PostgreSQL** (`targets.postgres.json`):
+**PostgreSQL** (`targets/postgres.json`):
 ```json
 [
   {
@@ -143,6 +144,22 @@ MINIO_ROOT_PASSWORD=mimir123
     "labels": {
       "cluster": "ptit",
       "environment": "production"
+    }
+  }
+]
+```
+
+**Blackbox Health Checks** (`targets/blackbox-liveness.json`, `targets/blackbox-readiness.json`):
+```json
+[
+  {
+    "targets": [
+      "http://10.170.100.27:8000/app/timestamp",
+      "http://backend-service:8080/health"
+    ],
+    "labels": {
+      "env": "production",
+      "probe_type": "liveness"
     }
   }
 ]
@@ -254,8 +271,34 @@ Hệ thống có sẵn các alert rules cho:
 - **PostgreSQL**: Connections, locks, replication
 - **Nginx**: High error rate, response time
 - **LGTM Stack**: Service down, high resource usage
+- **Tempo**: Service latency, error rates, traffic anomalies
+- **Blackbox**: Health check failures, slow responses, flapping
 
-Xem chi tiết tại: `grafana-prometheus/prometheus/rules.*.yml`
+Xem chi tiết tại: `grafana-prometheus/prometheus/alerts/*.yml`
+
+### Cấu trúc Prometheus
+
+```
+prometheus/
+├── targets/           # Service discovery files
+│   ├── node.json
+│   ├── cadvisor.json
+│   ├── nginx.json
+│   ├── mongodb.json
+│   ├── postgres.json
+│   ├── blackbox-liveness.json
+│   └── blackbox-readiness.json
+├── alerts/            # Alert rules
+│   ├── node-exporter.yml
+│   ├── docker.yml
+│   ├── lgtm-stack.yml
+│   ├── mongodb.yml
+│   ├── nginx.yml
+│   ├── postgresql.yml
+│   ├── tempo.yml
+│   └── blackbox.yml
+└── prometheus.yml     # Main config
+```
 
 ## 🔍 Troubleshooting
 
@@ -274,7 +317,7 @@ docker-compose logs -f alloy
 curl http://localhost:9090/api/v1/targets
 
 # Kiểm tra file JSON targets
-cat grafana-prometheus/prometheus/targets.node.json
+cat grafana-prometheus/prometheus/targets/node.json
 ```
 
 ### Mimir không nhận được metrics
