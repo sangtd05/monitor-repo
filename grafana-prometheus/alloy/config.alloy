@@ -7,6 +7,12 @@ discovery.relabel "docker_logs" {
   targets = discovery.docker.containers.targets
 
   rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex         = ".*(loki|alloy).*"
+    action        = "drop"
+  }
+
+  rule {
     source_labels = ["__meta_docker_container_id"]
     target_label  = "__path__"
     replacement   = "/var/lib/docker/containers/$1/$1-json.log"
@@ -110,6 +116,12 @@ discovery.relabel "system_logs" {
   rule {
     source_labels = ["__path__"]
     regex         = ".*(apport|dpkg|ubuntu-advantage|vmware|alternatives|bootstrap|cloud-init).*\\.log"
+    action        = "drop"
+  }
+
+  rule {
+    source_labels = ["__path__"]
+    regex         = ".*(syslog|auth\\.log|kern\\.log).*"
     action        = "drop"
   }
 }
