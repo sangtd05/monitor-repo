@@ -110,6 +110,26 @@ scrape_configs:
         target_label: service
         replacement: '$1'
 
+  - job_name: 'blackbox-http-internal'
+    metrics_path: /probe
+    params:
+      module: [http_2xx]
+    file_sd_configs:
+      - files:
+          - /etc/prometheus/targets/blackbox-internal.json
+        refresh_interval: 30s
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115
+      - source_labels: [__param_target]
+        regex: 'http://([^:]+):.*'
+        target_label: service
+        replacement: '$1'
+
 remote_write:
   - url: http://mimir:9009/api/v1/push
     write_relabel_configs:

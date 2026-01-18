@@ -749,12 +749,12 @@
                                             "0": {
                                                 "color": "red",
                                                 "index": 1,
-                                                "text": "❌ DOWN"
+                                                "text": "DOWN"
                                             },
                                             "1": {
                                                 "color": "green",
                                                 "index": 0,
-                                                "text": "✅ UP"
+                                                "text": "UP"
                                             }
                                         },
                                         "type": "value"
@@ -839,33 +839,47 @@
             "title": "All Health Checks Summary",
             "transformations": [
                 {
-                    "id": "merge",
-                    "options": {}
+                    "id": "joinByField",
+                    "options": {
+                        "byField": "instance",
+                        "mode": "outer"
+                    }
                 },
                 {
                     "id": "organize",
                     "options": {
                         "excludeByName": {
                             "Time": true,
-                            "__name__": true,
-                            "job": false,
-                            "probe_type": false
+                            "Time 1": true,
+                            "Time 2": true,
+                            "Time 3": true,
+                            "__name__ 1": true,
+                            "__name__ 2": true,
+                            "__name__ 3": true,
+                            "component 1": true,
+                            "component 2": true,
+                            "component 3": true,
+                            "env 1": true,
+                            "env 2": true,
+                            "env 3": true,
+                            "job 2": true,
+                            "job 3": true,
+                            "probe_type 2": true,
+                            "probe_type 3": true,
+                            "service 2": true,
+                            "service 3": true
                         },
-                        "indexByName": {
-                            "Value #A": 3,
-                            "Value #B": 4,
-                            "Value #C": 5,
-                            "instance": 1,
-                            "job": 0,
-                            "probe_type": 2
-                        },
+                        "indexByName": {},
                         "renameByName": {
                             "Value #A": "Status",
                             "Value #B": "HTTP Code",
                             "Value #C": "Duration (s)",
+                            "component 1": "component",
+                            "env 1": "env",
                             "instance": "Endpoint",
-                            "job": "Job",
-                            "probe_type": "Type"
+                            "job 1": "Job",
+                            "probe_type 1": "Type",
+                            "service 1": "service"
                         }
                     }
                 }
@@ -878,14 +892,14 @@
     "style": "dark",
     "tags": [
         "blackbox",
-        "health-check",
-        "synthetic-monitoring"
+        "health-checks",
+        "monitoring"
     ],
     "templating": {
         "list": []
     },
     "time": {
-        "from": "now-1h",
+        "from": "now-6h",
         "to": "now"
     },
     "timepicker": {},
