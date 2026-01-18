@@ -111,7 +111,7 @@ loki.process "mongodb" {
 
   stage.drop {
     source     = ""
-    expression = "Connection (accepted|ended)|Interrupted operation as its client disconnected"
+    expression = "Connection (accepted|ended)|Interrupted operation as its client disconnected|Successfully authenticated|client metadata|Auth metrics report|Received first command on ingress" // Drop connection spam logs
   }
 
   stage.json {
@@ -124,10 +124,29 @@ loki.process "mongodb" {
     }
   }
 
+  stage.regex {
+    source     = "attr"
+    expression = ".*\"durationMillis\":(?P<durationMillis>\\d+).*"
+  }
+
+  stage.regex {
+    source     = "attr"
+    expression = ".*\"ns\":\"(?P<ns>[^\"]+)\".*"
+  }
+
+  stage.regex {
+    source     = "attr"
+    expression = ".*\"planSummary\":\"(?P<planSummary>[^\"]+)\".*"
+  }
+
   stage.labels {
     values = {
-      severity  = "",
-      component = "",
+      severity       = "",
+      component      = "",
+      message        = "",
+      durationMillis = "",
+      ns             = "",
+      planSummary    = "",
     }
   }
 
