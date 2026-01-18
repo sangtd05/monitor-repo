@@ -1,0 +1,9 @@
+[
+    {
+        "targets": [],
+        "labels": {
+            "env": "production",
+            "probe_type": "liveness"
+        }
+    }
+]
