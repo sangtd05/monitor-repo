@@ -29,10 +29,10 @@ loki.source.docker "postgres" {
 loki.process "postgresql" {
   stage.docker { }
 
-	stage.drop {
-		source     = ""
-		expression = "^time=.*level=(INFO|ERROR|WARN|DEBUG).*source=.*\\.go.*msg=.*"
-	}
+  stage.drop {
+    source     = ""
+    expression = "^time=.*level=(INFO|ERROR|WARN|DEBUG).*source=.*\\.go.*msg=.*"
+  }
 
   stage.multiline {
     firstline     = "^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}"
@@ -40,7 +40,7 @@ loki.process "postgresql" {
   }
 
   stage.regex {
-    expression = "^(?P<timestamp>\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)? \\w+) \\[(?P<pid>\\d+)\\]: \\[(?P<line_num>\\d+-\\d+)\\] user=(?P<user>[^,]*),db=(?P<database>[^,]*),app=(?P<application>[^,]*),client=(?P<client>[^ ]*) (?P<level>\\w+):\\s+(?P<message>.*)"
+    expression = "^(?P<timestamp>\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d+ \\w+) \\[(?P<pid>\\d+)\\] user=(?P<user>[^ ]*) db=(?P<database>[^ ]*) app=(?P<application>[^ ]*) client=(?P<client>[^ ]*) (?P<level>\\w+):\\s+(?P<message>.*)"
   }
 
   stage.labels {
@@ -99,17 +99,16 @@ loki.source.docker "mongodb" {
 loki.process "mongodb" {
   stage.docker { }
 
-	stage.drop {
-		source     = ""
-		expression = "^time=.*level=(INFO|ERROR|WARN|DEBUG).*source=.*\\.go.*msg=.*"
-	}
+  stage.drop {
+    source     = ""
+    expression = "^time=.*level=(INFO|ERROR|WARN|DEBUG).*source=.*\\.go.*msg=.*"
+  }
 
   stage.json {
     expressions = {
       timestamp = "t.\"$date\"",
       severity  = "s",
       component = "c",
-      context   = "ctx",
       message   = "msg",
       attr      = "attr",
     }

@@ -45,9 +45,7 @@ services:
       - "-c"
       - "log_disconnections=on"
       - "-c"
-      - "log_duration=on"
-      - "-c"
-      - "log_line_prefix=%t [%p]: [%l-1] user=%u,db=%d,app=%a,client=%h "
+      - "log_line_prefix=%m [%p] user=%u db=%d app=%a client=%h %e "
     ports:
       - ${SQL_PORT}:5432
     restart: always
