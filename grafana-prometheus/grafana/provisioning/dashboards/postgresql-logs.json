@@ -135,6 +135,7 @@
                     },
                     "editorMode": "code",
                     "expr": "sum by (database) (count_over_time({db_type=\"postgres\", database=~\"$database\"} |~ \"duration: [0-9]{4,}\" [5m]))",
+                    "legendFormat": "{{database}}",
                     "queryType": "range",
                     "refId": "A"
                 }
@@ -320,6 +321,7 @@
                     },
                     "editorMode": "code",
                     "expr": "sum by (level) (rate({db_type=\"postgres\", database=~\"$database\", level=~\"ERROR|WARNING\"}[5m]))",
+                    "legendFormat": "{{level}}",
                     "queryType": "range",
                     "refId": "A"
                 }
@@ -404,6 +406,7 @@
                     },
                     "editorMode": "code",
                     "expr": "sum by (user) (count_over_time({db_type=\"postgres\", database=~\"$database\", user!=\"\"}[$__range]))",
+                    "legendFormat": "{{user}}",
                     "queryType": "range",
                     "refId": "A"
                 }
@@ -474,6 +477,7 @@
                     },
                     "editorMode": "code",
                     "expr": "sum by (database) (count_over_time({db_type=\"postgres\", database!=\"\"}[$__range]))",
+                    "legendFormat": "{{database}}",
                     "queryType": "range",
                     "refId": "A"
                 }
@@ -565,6 +569,7 @@
                     },
                     "editorMode": "code",
                     "expr": "sum by (level) (count_over_time({db_type=\"postgres\", database=~\"$database\"}[5m]))",
+                    "legendFormat": "{{level}}",
                     "queryType": "range",
                     "refId": "A"
                 }
