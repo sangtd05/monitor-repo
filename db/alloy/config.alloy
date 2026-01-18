@@ -39,6 +39,11 @@ loki.process "postgresql" {
     max_wait_time = "3s"
   }
 
+  stage.drop {
+    source     = ""
+    expression = "DETAIL:"
+  }
+
   stage.regex {
     expression = "^(?P<timestamp>\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d+ \\w+) \\[(?P<pid>\\d+)\\] user=(?P<user>[^ ]*) db=(?P<database>[^ ]*) app=(?P<application>[^ ]*) client=(?P<client>[^ ]*) (?P<sqlstate>\\d{5}) (?P<level>\\w+):\\s+(?P<message>.*)"
   }
@@ -102,6 +107,11 @@ loki.process "mongodb" {
   stage.drop {
     source     = ""
     expression = "^time=.*level=(INFO|ERROR|WARN|DEBUG).*source=.*\\.go.*msg=.*"
+  }
+
+  stage.drop {
+    source     = ""
+    expression = "Connection (accepted|ended)|Interrupted operation as its client disconnected"
   }
 
   stage.json {

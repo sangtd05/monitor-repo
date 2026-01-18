@@ -41,10 +41,6 @@ services:
       - "-c"
       - "log_statement=ddl"
       - "-c"
-      - "log_connections=on"
-      - "-c"
-      - "log_disconnections=on"
-      - "-c"
       - "log_line_prefix=%m [%p] user=%u db=%d app=%a client=%h %e "
     ports:
       - ${SQL_PORT}:5432
