@@ -41,7 +41,9 @@
                 "edges": {
                     "mainStatUnit": "reqps"
                 },
-                "nodes": {}
+                "nodes": {
+                    "mainStatUnit": "reqps"
+                }
             },
             "targets": [
                 {
@@ -56,10 +58,23 @@
                     "legendFormat": "__auto",
                     "range": false,
                     "refId": "A"
+                },
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "prometheus"
+                    },
+                    "editorMode": "code",
+                    "expr": "sum by (client, server) (rate(traces_service_graph_request_failed_total[$__rate_interval]))",
+                    "format": "table",
+                    "instant": true,
+                    "legendFormat": "__auto",
+                    "range": false,
+                    "refId": "B"
                 }
             ],
             "title": "Service Dependency Graph",
-            "type": "nodeGraph"
+            "type": "table"
         },
         {
             "datasource": {
@@ -257,7 +272,7 @@
     },
     "timepicker": {},
     "timezone": "",
-    "title": "Tempo Service Graph",
+    "title": "Service Graph",
     "uid": "tempo-service-graph",
     "version": 1
 }
