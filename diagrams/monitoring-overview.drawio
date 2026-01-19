@@ -1,0 +1,276 @@
+<mxfile host="app.diagrams.net" agent="Antigravity AI" version="24.0.0">
+  <diagram name="Monitoring Overview" id="overview">
+    <mxGraphModel dx="1434" dy="844" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2000" pageHeight="1400" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        
+        <!-- Title -->
+        <mxCell id="title" value="LGTM Stack - Centralized Monitoring Architecture" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=28;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="500" y="30" width="1000" height="50" as="geometry" />
+        </mxCell>
+        
+        <!-- Monitoring Server Container -->
+        <mxCell id="monitoring-server" value="MONITORING SERVER" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#C8E6C9;strokeColor=#82B366;fontSize=20;fontStyle=1;verticalAlign=top;align=center;" vertex="1" parent="1">
+          <mxGeometry x="200" y="120" width="1600" height="480" as="geometry" />
+        </mxCell>
+        
+        <!-- Grafana -->
+        <mxCell id="grafana" value="Grafana&lt;br&gt;:3000&lt;br&gt;&lt;br&gt;Visualization&lt;br&gt;Dashboards&lt;br&gt;Alerts" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#99ff99;strokeColor=#82B366;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="280" y="180" width="180" height="140" as="geometry" />
+        </mxCell>
+        
+        <!-- Prometheus -->
+        <mxCell id="prometheus" value="Prometheus&lt;br&gt;:9090&lt;br&gt;&lt;br&gt;Metrics Storage&lt;br&gt;Time-Series DB&lt;br&gt;15d retention" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ff9999;strokeColor=#B85450;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="520" y="180" width="180" height="140" as="geometry" />
+        </mxCell>
+        
+        <!-- Loki -->
+        <mxCell id="loki" value="Loki&lt;br&gt;:3100&lt;br&gt;&lt;br&gt;Logs Storage&lt;br&gt;Label-based&lt;br&gt;7d retention" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffcc99;strokeColor=#D79B00;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="760" y="180" width="180" height="140" as="geometry" />
+        </mxCell>
+        
+        <!-- Tempo -->
+        <mxCell id="tempo" value="Tempo&lt;br&gt;:3200&lt;br&gt;&lt;br&gt;Traces Storage&lt;br&gt;Distributed Tracing&lt;br&gt;7d retention" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#cc99ff;strokeColor=#8E24AA;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="1000" y="180" width="180" height="140" as="geometry" />
+        </mxCell>
+        
+        <!-- OTel Collector -->
+        <mxCell id="otel" value="Grafana Alloy&lt;br&gt;:4317 / :4318&lt;br&gt;:12345&lt;br&gt;&lt;br&gt;Unified Agent&lt;br&gt;(Logs, Traces, Metrics)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1BEE7;strokeColor=#8E24AA;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="1240" y="180" width="160" height="140" as="geometry" />
+        </mxCell>
+        
+        <!-- Alertmanager -->
+        <mxCell id="alertmanager" value="Alertmanager&lt;br&gt;:9093&lt;br&gt;&lt;br&gt;Alert Routing&lt;br&gt;Telegram" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE6E6;strokeColor=#B85450;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="1460" y="180" width="160" height="140" as="geometry" />
+        </mxCell>
+        
+        <!-- Promtail -->
+        <mxCell id="promtail" value="Mimir&lt;br&gt;:9009&lt;br&gt;&lt;br&gt;Long-term Metrics&lt;br&gt;S3 Storage&lt;br&gt;1yr+ retention" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF4E6;strokeColor=#D79B00;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="1680" y="180" width="160" height="140" as="geometry" />
+        </mxCell>
+        
+        <!-- Data Flow Labels -->
+        <mxCell id="metrics-label" value="METRICS (Pull)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE6E6;strokeColor=#B85450;fontSize=12;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="280" y="380" width="340" height="40" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="logs-label" value="LOGS (Push)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF9E6;strokeColor=#D79B00;fontSize=12;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="680" y="380" width="340" height="40" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="traces-label" value="TRACES (Push)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1BEE7;strokeColor=#8E24AA;fontSize=12;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="1080" y="380" width="340" height="40" as="geometry" />
+        </mxCell>
+        
+        <!-- Connections within monitoring server -->
+        <mxCell id="conn-prom-grafana" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#009688;strokeWidth=2;" edge="1" parent="1" source="prometheus" target="grafana">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="conn-loki-grafana" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#009688;strokeWidth=2;" edge="1" parent="1" source="loki" target="grafana">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="conn-tempo-grafana" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#009688;strokeWidth=2;" edge="1" parent="1" source="tempo" target="grafana">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="conn-otel-tempo" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#9C27B0;strokeWidth=2;" edge="1" parent="1" source="otel" target="tempo">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="conn-prom-alert" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#FF6B6B;strokeWidth=2;" edge="1" parent="1" source="prometheus" target="alertmanager">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <!-- Monitored Servers Container -->
+        <mxCell id="monitored-servers" value="MONITORED SERVERS (6 Servers)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1F5FF;strokeColor=#6C8EBF;fontSize=20;fontStyle=1;verticalAlign=top;align=center;" vertex="1" parent="1">
+          <mxGeometry x="200" y="680" width="1600" height="380" as="geometry" />
+        </mxCell>
+        
+        <!-- Application Servers -->
+        <mxCell id="app-servers" value="Application Servers&lt;br&gt;(2 servers)&lt;br&gt;&lt;br&gt;• Node Exporter :9100&lt;br&gt;• cAdvisor :8080&lt;br&gt;• NestJS App&lt;br&gt;• Pino Logger&lt;br&gt;• OTel SDK" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontSize=13;align=left;" vertex="1" parent="1">
+          <mxGeometry x="280" y="750" width="240" height="260" as="geometry" />
+        </mxCell>
+        
+        <!-- Database Servers -->
+        <mxCell id="db-servers" value="Database Servers&lt;br&gt;(2 servers)&lt;br&gt;&lt;br&gt;• Node Exporter :9100&lt;br&gt;• MongoDB Exporter :9216&lt;br&gt;• PostgreSQL Exporter :9187&lt;br&gt;• Database logs" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;fontSize=13;align=left;" vertex="1" parent="1">
+          <mxGeometry x="600" y="750" width="260" height="260" as="geometry" />
+        </mxCell>
+        
+        <!-- Web Servers -->
+        <mxCell id="web-servers" value="Web Servers&lt;br&gt;(2 servers)&lt;br&gt;&lt;br&gt;• Node Exporter :9100&lt;br&gt;• Nginx Exporter :9113&lt;br&gt;• cAdvisor :8080&lt;br&gt;• Access logs" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;fontSize=13;align=left;" vertex="1" parent="1">
+          <mxGeometry x="940" y="750" width="240" height="260" as="geometry" />
+        </mxCell>
+        
+        <!-- External Services -->
+        <mxCell id="external" value="External Services&lt;br&gt;&lt;br&gt;• Telegram Bot&lt;br&gt;  (Alert Notifications)&lt;br&gt;&lt;br&gt;• User Browsers&lt;br&gt;  (Grafana UI)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF9C4;strokeColor=#FBC02D;fontSize=13;align=left;" vertex="1" parent="1">
+          <mxGeometry x="1260" y="750" width="240" height="260" as="geometry" />
+        </mxCell>
+        
+        <!-- Data Flow Arrows -->
+        <!-- Metrics Pull -->
+        <mxCell id="arrow-metrics-1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#FF0000;strokeWidth=3;dashed=1;dashPattern=8 8;" edge="1" parent="1" source="prometheus" target="app-servers">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="610" y="360" />
+              <mxPoint x="400" y="360" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="arrow-metrics-1-label" value="SCRAPE" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=11;fontColor=#FF0000;fontStyle=1;" vertex="1" connectable="0" parent="arrow-metrics-1">
+          <mxGeometry x="-0.2" y="2" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="arrow-metrics-2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#FF0000;strokeWidth=3;dashed=1;dashPattern=8 8;" edge="1" parent="1" source="prometheus" target="db-servers">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="610" y="360" />
+              <mxPoint x="730" y="360" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="arrow-metrics-2-label" value="SCRAPE" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=11;fontColor=#FF0000;fontStyle=1;" vertex="1" connectable="0" parent="arrow-metrics-2">
+          <mxGeometry x="-0.2" y="2" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="arrow-metrics-3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#FF0000;strokeWidth=3;dashed=1;dashPattern=8 8;" edge="1" parent="1" source="prometheus" target="web-servers">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="610" y="360" />
+              <mxPoint x="1060" y="360" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="arrow-metrics-3-label" value="SCRAPE" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=11;fontColor=#FF0000;fontStyle=1;" vertex="1" connectable="0" parent="arrow-metrics-3">
+          <mxGeometry x="-0.2" y="2" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        
+        <!-- Logs Push -->
+        <mxCell id="arrow-logs-1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#0000FF;strokeWidth=3;" edge="1" parent="1" source="app-servers" target="loki">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="400" y="640" />
+              <mxPoint x="850" y="640" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="arrow-logs-1-label" value="PUSH LOGS" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=11;fontColor=#0000FF;fontStyle=1;" vertex="1" connectable="0" parent="arrow-logs-1">
+          <mxGeometry x="-0.2" y="2" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="arrow-logs-2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#0000FF;strokeWidth=3;" edge="1" parent="1" source="db-servers" target="loki">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="730" y="640" />
+              <mxPoint x="850" y="640" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="arrow-logs-3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#0000FF;strokeWidth=3;" edge="1" parent="1" source="web-servers" target="loki">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1060" y="640" />
+              <mxPoint x="850" y="640" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        
+        <!-- Traces Push -->
+        <mxCell id="arrow-traces-1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#9C27B0;strokeWidth=3;" edge="1" parent="1" source="app-servers" target="otel">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="400" y="620" />
+              <mxPoint x="1320" y="620" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="arrow-traces-1-label" value="TRACES" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=11;fontColor=#9C27B0;fontStyle=1;" vertex="1" connectable="0" parent="arrow-traces-1">
+          <mxGeometry x="-0.2" y="2" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        
+        <!-- Alerts -->
+        <mxCell id="arrow-alerts" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#FF6B6B;strokeWidth=3;" edge="1" parent="1" source="alertmanager" target="external">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1540" y="600" />
+              <mxPoint x="1380" y="600" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="arrow-alerts-label" value="ALERTS" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=11;fontColor=#FF6B6B;fontStyle=1;" vertex="1" connectable="0" parent="arrow-alerts">
+          <mxGeometry x="-0.2" y="2" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        
+        <!-- Legend -->
+        <mxCell id="legend-box" value="LEGEND" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontSize=14;fontStyle=1;verticalAlign=top;align=left;" vertex="1" parent="1">
+          <mxGeometry x="200" y="1120" width="600" height="200" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="legend-metrics" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#FF0000;strokeWidth=3;dashed=1;dashPattern=8 8;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="240" y="1170" as="sourcePoint" />
+            <mxPoint x="340" y="1170" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="legend-metrics-text" value="Metrics Pull (Prometheus scrapes exporters)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="360" y="1155" width="300" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="legend-logs" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#0000FF;strokeWidth=3;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="240" y="1210" as="sourcePoint" />
+            <mxPoint x="340" y="1210" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="legend-logs-text" value="Logs Push (Applications/Alloy push to Loki)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="360" y="1195" width="350" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="legend-traces" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#9C27B0;strokeWidth=3;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="240" y="1250" as="sourcePoint" />
+            <mxPoint x="340" y="1250" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="legend-traces-text" value="Traces Push (Applications push to Alloy)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="360" y="1235" width="380" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="legend-query" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#009688;strokeWidth=2;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="240" y="1290" as="sourcePoint" />
+            <mxPoint x="340" y="1290" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="legend-query-text" value="Query (Grafana queries data sources)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="360" y="1275" width="300" height="30" as="geometry" />
+        </mxCell>
+        
+        <!-- Key Features -->
+        <mxCell id="features-box" value="KEY FEATURES" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1F5FF;strokeColor=#6C8EBF;fontSize=14;fontStyle=1;verticalAlign=top;align=left;" vertex="1" parent="1">
+          <mxGeometry x="880" y="1120" width="920" height="200" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="features-text" value="✓ Centralized Monitoring: LGTM Stack + Alloy&lt;br&gt;✓ Complete Observability: Metrics + Logs + Traces&lt;br&gt;✓ Real-time Alerting: Telegram notifications via Alertmanager&lt;br&gt;✓ Unified Visualization: Single Grafana UI for all data sources&lt;br&gt;✓ Long-term Storage: MinIO (S3) for Mimir/Loki/Tempo&lt;br&gt;✓ Retention: 1 Year (Metrics), 30 Days (Logs)&lt;br&gt;✓ Scalable: Grafana Alloy as Unified Agent&lt;br&gt;✓ Self-hosted: Full control, no vendor lock-in" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="920" y="1160" width="840" height="140" as="geometry" />
+        </mxCell>
+        
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
