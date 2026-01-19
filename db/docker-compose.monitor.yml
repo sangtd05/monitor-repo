@@ -3,7 +3,7 @@ services:
     image: prometheuscommunity/postgres-exporter:v0.18.0
     container_name: postgres-exporter
     environment:
-      - DATA_SOURCE_NAME=postgresql://${SQL_USER}:${SQL_PASSWORD}@postgres:5432/postgres?sslmode=disable
+      - DATA_SOURCE_NAME=postgresql://${SQL_USER}:${SQL_PASSWORD}@172.17.0.1:3071/postgres?sslmode=disable
       - PG_EXPORTER_AUTO_DISCOVER_DATABASES=true
       - PG_EXPORTER_EXCLUDE_DATABASES=template0,template1
     ports:
@@ -16,7 +16,7 @@ services:
     image: percona/mongodb_exporter:0.47
     container_name: mongodb-exporter
     command:
-      - "--mongodb.uri=mongodb://${MONGODB_USER}:${MONGODB_PASSWORD}@mongodb:27017"
+      - "--mongodb.uri=mongodb://${MONGODB_USER}:${MONGODB_PASSWORD}@172.17.0.1:3072"
       - "--collect-all"
       - "--compatible-mode"
       - "--collector.replicasetstatus"
