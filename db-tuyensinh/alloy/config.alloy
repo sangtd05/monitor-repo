@@ -22,12 +22,7 @@ loki.source.docker "mongodb" {
   host             = "unix:///var/run/docker.sock"
   targets          = discovery.relabel.mongodb_filter.output
   forward_to       = [loki.process.mongodb.receiver]
-  labels           = {
-      job          = "mongodb",
-      service_name = env("MONGODB_SERVICE_NAME"),
-      host         = env("DB_HOST"),
-      instance     = env("ENVIRONMENT"),
-  }
+  labels           = {"job" = "mongodb"}
   refresh_interval = "5s"
 }
 
@@ -45,13 +40,37 @@ loki.process "mongodb" {
 
   stage.regex {
     source     = "message"
-    expression = "(\\s+|\\}) (?P<durationMillis>\\d+)ms$"
+    expression = "(?P<durationMillis>\\d+)ms$"
+  }
+
+  stage.regex {
+    source     = "message"
+    expression = "(?:command|getMore)\\s+(?P<ns>[\\w\\-]+\\.[\\w\\-]+)"
+  }
+
+  stage.regex {
+    source     = "message"
+    expression = "planSummary:\\s*(?P<planSummary>\\w+)"
+  }
+
+  stage.template {
+    source   = "message_type"
+    template = "{{ if .durationMillis }}Slow query{{ else }}Info{{ end }}"
   }
 
   stage.labels {
     values = {
-      severity  = "severity",
-      component = "component",
+      severity    = "severity",
+      component   = "component",
+      message     = "message_type",
+      ns          = "ns",
+      planSummary = "planSummary",
+    }
+  }
+
+  stage.structured_metadata {
+    values = {
+      durationMillis = "durationMillis",
     }
   }
 
@@ -64,10 +83,14 @@ loki.process "mongodb" {
     source = "message"
   }
 
-  forward_to = [
-    loki.write.loki_endpoint.receiver,
-    loki.echo.debug.receiver,
-  ]
-}
+  stage.static_labels {
+    values = {
+      service_name = env("MONGODB_SERVICE_NAME"),
+      db_type      = "mongodb",
+      host         = env("DB_HOST"),
+      instance     = env("ENVIRONMENT"),
+    }
+  }
 
-loki.echo "debug" { }
+  forward_to = [loki.write.loki_endpoint.receiver]
+}

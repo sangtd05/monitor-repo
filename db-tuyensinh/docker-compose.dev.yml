@@ -34,4 +34,4 @@ services:
       options:
         max-size: "100m"
         max-file: "3"
-    command: [ "mongod", "--profile", "1", "--slowms", "100", "--logLevel", "1" ]
+    command: [ "mongod", "--profile", "1", "--slowms", "100" ]
