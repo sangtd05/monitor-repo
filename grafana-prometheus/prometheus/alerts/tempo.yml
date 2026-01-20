@@ -52,17 +52,17 @@ groups:
         expr: |
           (
             sum by (service_name) (
-              rate(traces_spanmetrics_calls_total{status_code="STATUS_CODE_ERROR"}[5m])
+              rate(traces_spanmetrics_calls_total{status_code="STATUS_CODE_ERROR",span_name!~"(dns\\.lookup|tcp\\.connect|connect)"}[5m])
             )
             /
             sum by (service_name) (
-              rate(traces_spanmetrics_calls_total[5m])
+              rate(traces_spanmetrics_calls_total{span_name!~"(dns\\.lookup|tcp\\.connect|connect)"}[5m])
             ) > 0.05
           )
           and
           (
             sum by (service_name) (
-              rate(traces_spanmetrics_calls_total[5m])
+              rate(traces_spanmetrics_calls_total{span_name!~"(dns\\.lookup|tcp\\.connect|connect)"}[5m])
             ) > 0.1
           )
         for: 10m
@@ -79,17 +79,17 @@ groups:
         expr: |
           (
             sum by (service_name) (
-              rate(traces_spanmetrics_calls_total{status_code="STATUS_CODE_ERROR"}[5m])
+              rate(traces_spanmetrics_calls_total{status_code="STATUS_CODE_ERROR",span_name!~"(dns\\.lookup|tcp\\.connect|connect)"}[5m])
             )
             /
             sum by (service_name) (
-              rate(traces_spanmetrics_calls_total[5m])
-            ) > 0.20
+              rate(traces_spanmetrics_calls_total{span_name!~"(dns\\.lookup|tcp\\.connect|connect)"}[5m])
+            ) > 0.10
           )
           and
           (
             sum by (service_name) (
-              rate(traces_spanmetrics_calls_total[5m])
+              rate(traces_spanmetrics_calls_total{span_name!~"(dns\\.lookup|tcp\\.connect|connect)"}[5m])
             ) > 0.1
           )
         for: 5m
@@ -99,7 +99,7 @@ groups:
           alert_type: reliability
         annotations:
           summary: "Critical error rate for service {{ $labels.service_name }}"
-          description: "Service {{ $labels.service_name }} has critical error rate of {{ $value | humanizePercentage }} (threshold: 20%). Immediate action required."
+          description: "Service {{ $labels.service_name }} has critical error rate of {{ $value | humanizePercentage }} (threshold: 10%). Immediate action required."
           dashboard: "tempo-span-metrics-red"
 
       - alert: HighHTTP5xxRate
