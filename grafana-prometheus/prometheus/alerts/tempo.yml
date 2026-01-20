@@ -7,12 +7,12 @@ groups:
           (
             histogram_quantile(0.95, 
               sum by (service_name, le) (
-                rate(traces_spanmetrics_latency_bucket[5m])
+                rate(traces_spanmetrics_latency_bucket{span_name!~"(dns\\.lookup|tcp\\.connect|connect)"}[5m])
               )
             ) > 3
             and
             sum by (service_name) (
-              rate(traces_spanmetrics_calls_total[5m])
+              rate(traces_spanmetrics_calls_total{span_name!~"(dns\\.lookup|tcp\\.connect|connect)"}[5m])
             ) > 0.1
           )
         for: 10m
@@ -30,12 +30,12 @@ groups:
           (
             histogram_quantile(0.95, 
               sum by (service_name, le) (
-                rate(traces_spanmetrics_latency_bucket[5m])
+                rate(traces_spanmetrics_latency_bucket{span_name!~"(dns\\.lookup|tcp\\.connect|connect)"}[5m])
               )
             ) > 10
             and
             sum by (service_name) (
-              rate(traces_spanmetrics_calls_total[5m])
+              rate(traces_spanmetrics_calls_total{span_name!~"(dns\\.lookup|tcp\\.connect|connect)"}[5m])
             ) > 0.1
           )
         for: 5m
@@ -176,12 +176,12 @@ groups:
           (
             histogram_quantile(0.95, 
               sum by (service_name, span_name, http_method, le) (
-                rate(traces_spanmetrics_latency_bucket{span_name!=""}[5m])
+                rate(traces_spanmetrics_latency_bucket{span_name!="",span_name!~"(dns\\.lookup|tcp\\.connect|connect)"}[5m])
               )
             ) > 10
             and
             sum by (service_name, span_name, http_method) (
-              rate(traces_spanmetrics_calls_total{span_name!=""}[5m])
+              rate(traces_spanmetrics_calls_total{span_name!="",span_name!~"(dns\\.lookup|tcp\\.connect|connect)"}[5m])
             ) > 0.05
           )
         for: 15m
@@ -193,44 +193,6 @@ groups:
           summary: "Slow endpoint: {{ $labels.http_method }} {{ $labels.span_name }}"
           description: "Endpoint {{ $labels.http_method }} {{ $labels.span_name }} in {{ $labels.service_name }} has P95 latency of {{ $value | humanizeDuration }} (threshold: 10s). Consider optimization."
           dashboard: "tempo-endpoint-performance"
-
-      - alert: HighEndpointErrorRate
-        expr: |
-          (
-            sum by (service_name, span_name, http_method) (
-              rate(traces_spanmetrics_calls_total{status_code="STATUS_CODE_ERROR",span_name!="",span_name!~"(dns\\.lookup|tcp\\.connect|connect)"}[5m])
-            )
-            /
-            sum by (service_name, span_name, http_method) (
-              rate(traces_spanmetrics_calls_total{span_name!="",span_name!~"(dns\\.lookup|tcp\\.connect|connect)"}[5m])
-            ) > 0.10
-          )
-          and
-          (
-            sum by (service_name, span_name, http_method) (
-              rate(traces_spanmetrics_calls_total{span_name!="",span_name!~"(dns\\.lookup|tcp\\.connect|connect)"}[5m])
-            ) > 0.05
-          )
-        for: 10m
-        labels:
-          severity: warning
-          component: tempo
-          alert_type: reliability
-        annotations:
-          summary: "High error rate on API: {{ $labels.http_method }} {{ $labels.span_name }}"
-          description: "API endpoint {{ $labels.http_method }} {{ $labels.span_name }} in service {{ $labels.service_name }} has error rate of {{ $value | humanizePercentage }} (threshold: 10%). Check logs and traces for this specific endpoint."
-          dashboard: "tempo-endpoint-performance"
-
-      # ============================================
-      # TRAFFIC ALERTS - DISABLED (Uncomment if needed)
-      # ============================================
-      # These alerts are disabled by default as they cause many false positives
-      # in production environments with natural traffic variations.
-      # 
-      # If you need traffic monitoring, consider:
-      # 1. Using dynamic baselines with ML
-      # 2. Setting alerts only for complete service outages (traffic = 0)
-      # 3. Monitoring traffic in dashboards instead of alerts
 
       # - alert: ServiceRequestRateSpike
       #   expr: |
