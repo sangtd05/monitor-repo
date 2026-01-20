@@ -92,26 +92,6 @@ services:
       - loki
       - prometheus
 
-  pyroscope:
-    image: grafana/pyroscope:latest
-    container_name: pyroscope
-    command:
-      - "-config.file=/etc/pyroscope/pyroscope-config.yml"
-      - "-target=all"
-    volumes:
-      - ./pyroscope:/etc/pyroscope
-      - pyroscope-data:/data
-    environment:
-      - MINIO_ROOT_USER=${MINIO_ROOT_USER:-mimir}
-      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD:-mimir123}
-    ports:
-      - "4040:4040"
-    restart: unless-stopped
-    networks:
-      - monitoring
-    depends_on:
-      - minio-init
-
   alertmanager:
     image: prom/alertmanager:latest
     container_name: alertmanager
@@ -164,7 +144,7 @@ services:
       minio:
         condition: service_healthy
     entrypoint: >
-      /bin/sh -c " /usr/bin/mc alias set myminio http://minio:9000 ${MINIO_ROOT_USER:-mimir} ${MINIO_ROOT_PASSWORD:-mimir123}; /usr/bin/mc mb myminio/mimir-blocks --ignore-existing; /usr/bin/mc mb myminio/mimir-ruler --ignore-existing; /usr/bin/mc mb myminio/mimir-alertmanager --ignore-existing; /usr/bin/mc mb myminio/tempo --ignore-existing; /usr/bin/mc mb myminio/loki --ignore-existing; /usr/bin/mc mb myminio/pyroscope --ignore-existing; exit 0; "
+      /bin/sh -c " /usr/bin/mc alias set myminio http://minio:9000 ${MINIO_ROOT_USER:-mimir} ${MINIO_ROOT_PASSWORD:-mimir123}; /usr/bin/mc mb myminio/mimir-blocks --ignore-existing; /usr/bin/mc mb myminio/mimir-ruler --ignore-existing; /usr/bin/mc mb myminio/mimir-alertmanager --ignore-existing; /usr/bin/mc mb myminio/tempo --ignore-existing; /usr/bin/mc mb myminio/loki --ignore-existing; exit 0; "
     networks:
       - monitoring
 
@@ -263,7 +243,6 @@ volumes:
   mimir-data:
   alertmanager-data:
   alloy-data:
-  pyroscope-data:
 
 
 networks:

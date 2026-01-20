@@ -5,7 +5,6 @@
             "http://tempo:3200/ready",
             "http://loki:3100/ready",
             "http://alloy:12345/ready",
-            "http://pyroscope:4040/ready",
             "http://alertmanager:9093/-/healthy",
             "http://minio:9000/minio/health/live",
             "http://mimir:9009/ready",
