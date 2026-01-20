@@ -15,7 +15,9 @@ storage:
     insecure: true
 
 limits:
-  max_query_length: 720h
-  max_query_lookback: 720h
+  max_query_length: 168h
+  max_query_lookback: 168h
+retention_policy:
+  retention_duration: 168h
 memberlist:
   join_members: []
