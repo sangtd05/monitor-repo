@@ -8,5 +8,15 @@
             "env": "production",
             "server": "db-server"
         }
+    },
+    {
+        "targets": [
+            "10.99.3.80:9216"
+        ],
+        "labels": {
+            "job": "mongodb",
+            "env": "development",
+            "server": "db-tuyensinh"
+        }
     }
 ]

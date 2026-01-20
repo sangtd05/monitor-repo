@@ -1,0 +1,73 @@
+loki.write "loki_endpoint" {
+  endpoint {
+    url = env("LOKI_URL")
+  }
+}
+
+discovery.docker "all_containers" {
+  host = "unix:///var/run/docker.sock"
+}
+
+discovery.relabel "mongodb_filter" {
+  targets = discovery.docker.all_containers.targets
+
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex         = "/?mongo-tuyen-sinh"
+    action        = "keep"
+  }
+}
+
+loki.source.docker "mongodb" {
+  host             = "unix:///var/run/docker.sock"
+  targets          = discovery.relabel.mongodb_filter.output
+  forward_to       = [loki.process.mongodb.receiver]
+  labels           = {
+      job          = "mongodb",
+      service_name = env("MONGODB_SERVICE_NAME"),
+      host         = env("DB_HOST"),
+      instance     = env("ENVIRONMENT"),
+  }
+  refresh_interval = "5s"
+}
+
+loki.process "mongodb" {
+  stage.docker { }
+
+  stage.regex {
+    expression = "^(?P<timestamp>\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d+\\+\\d{4})\\s+(?P<severity>\\w)\\s+(?P<component>\\w+)\\s+\\[(?P<context>[^\\]]+)\\]\\s+(?P<message>.*)"
+  }
+
+  stage.drop {
+    source     = "message"
+    expression = "connection accepted|end connection|received client metadata|Successfully authenticated"
+  }
+
+  stage.regex {
+    source     = "message"
+    expression = "(\\s+|\\}) (?P<durationMillis>\\d+)ms$"
+  }
+
+  stage.labels {
+    values = {
+      severity  = "severity",
+      component = "component",
+    }
+  }
+
+  stage.timestamp {
+    source = "timestamp"
+    format = "2006-01-02T15:04:05.000+0000"
+  }
+
+  stage.output {
+    source = "message"
+  }
+
+  forward_to = [
+    loki.write.loki_endpoint.receiver,
+    loki.echo.debug.receiver,
+  ]
+}
+
+loki.echo "debug" { }

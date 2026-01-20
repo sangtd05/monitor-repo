@@ -1,0 +1,37 @@
+version: '3.7'
+
+services:
+  #  redis:
+  #    user: ${WHOAMI}
+  #    container_name: ${REDIS_CONTAINER_NAME_DEV}
+  #    image: redis
+  #    environment:
+  #      - .env
+  #    ports:
+  #      - "${REDIS_PORT_DEV}:6379"
+  #    command:
+  #      redis-server /usr/local/etc/redis/redis.conf --requirepass ${REDIS_PASSWORD_DEV}
+  #    volumes:
+  #      - ./config/docker/1.redis.conf:/usr/local/etc/redis/redis.conf
+  #      - ./data/redis/persistence:/var/redis/6379
+  #      - ./data/redis/run:/var/run
+  #    networks:
+  #      - template_network
+
+  mongo:
+    image: mongo
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USERNAME_DEV}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD_DEV}
+    container_name: ${MONGO_CONTAINER_NAME_DEV}
+    ports:
+      - "${MONGO_PORT_DEV}:27017"
+    volumes:
+      - ./data/mongo:/data/db
+    restart: always
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "3"
+    command: [ "mongod", "--profile", "1", "--slowms", "100", "--logLevel", "1" ]
