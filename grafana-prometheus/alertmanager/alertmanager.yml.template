@@ -3,9 +3,9 @@ global:
 
 route:
   group_by: ["alertname", "instance"]
-  group_wait: 10s
-  group_interval: 1m
-  repeat_interval: 1h
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 3h
   receiver: "telegram"
 
 receivers:
@@ -23,7 +23,7 @@ receivers:
           
           {{ range .Alerts }}
           {{ template "__alert_severity" .Labels.severity }} <b>{{ .Labels.alertname }}</b>{{ if .Labels.component }} [{{ .Labels.component }}]{{ end }}
-          {{ if .Annotations.summary }}<i>{{ .Annotations.summary }}</i>{{ end }}
+          {{ if .Annotations.summary }}{{ .Annotations.summary }}{{ end }}
           {{ if .Annotations.description }}
           {{ .Annotations.description | reReplaceAll "\\n  VALUE = .+" "" | reReplaceAll "\\n  LABELS = .+" "" }}{{ end }}
           {{- if .Labels.instance }}
