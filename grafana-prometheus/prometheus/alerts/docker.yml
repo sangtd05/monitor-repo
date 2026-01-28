@@ -6,10 +6,10 @@ groups:
   rules:
 
     # This rule can be very noisy in dynamic infra with legitimate container start/stop/deployment.
-    # Filtered to exclude temporary containers (GitLab runners, empty names)
+    # Filtered to exclude temporary containers without names (created during CI/CD jobs)
     - alert: ContainerKilled
-      expr: 'time() - container_last_seen > 60 and container_last_seen > 0 and name != "" and name !~ "runner-.*"'
-      for: 5m
+      expr: (time() - container_last_seen{name!="", name!~"runner.*"} > 60)
+      for: 1m
       labels:
         severity: warning
       annotations:
