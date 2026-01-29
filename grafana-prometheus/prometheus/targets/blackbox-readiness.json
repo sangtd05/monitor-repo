@@ -1,6 +1,12 @@
 [
     {
-        "targets": [],
+        "targets": [
+            "http://10.170.100.125:3064/health/ready",
+            "http://10.170.100.125:3013/health/ready",
+            "http://10.170.100.125:3014/health/ready",
+            "http://10.170.100.125:3015/health/ready",
+            "http://10.170.100.125:3105/health/ready"
+        ],
         "labels": {
             "env": "production",
             "probe_type": "readiness"
