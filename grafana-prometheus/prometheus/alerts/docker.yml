@@ -9,7 +9,7 @@ groups:
     # Filtered to exclude temporary containers without names (created during CI/CD jobs)
     - alert: ContainerKilled
       expr: (time() - container_last_seen{name!="", name!~"runner.*"} > 60)
-      for: 1m
+      for: 5m
       labels:
         severity: warning
       annotations:
