@@ -65,10 +65,6 @@ cp .env.example .env
 Chỉnh sửa file `.env`:
 
 ```env
-# Database Connection Strings
-MONGODB_URI_PTIT=mongodb://user:password@host:27017/admin
-POSTGRES_DSN_PTIT=postgresql://user:password@host:5432/dbname?sslmode=disable
-
 # Grafana Admin Password
 GRAFANA_PASSWORD=your_secure_password
 

@@ -374,10 +374,6 @@ GRAFANA_PASSWORD=your_secure_password
 ALERTMANAGER_URL=http://<MONITORING_SERVER_IP>:9093
 TELEGRAM_BOT_TOKEN=your_telegram_bot_token
 TELEGRAM_CHAT_ID=your_telegram_chat_id
-
-# Database Exporters (nếu chạy trên monitoring server)
-MONGODB_URI_PTIT=mongodb://user:pass@10.170.100.88:27017/admin
-POSTGRES_DSN_PTIT=postgresql://user:pass@10.170.100.24:5432/postgres?sslmode=disable
 ```
 
 ### 5.4. Cấu hình Monitoring Targets
