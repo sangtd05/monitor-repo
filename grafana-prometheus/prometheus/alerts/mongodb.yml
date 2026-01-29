@@ -16,7 +16,7 @@ groups:
 
     - alert: MongodbReplicaMemberUnhealthy
       expr: 'mongodb_rs_members_health == 0'
-      for: 0m
+      for: 1m
       labels:
         severity: critical
       annotations:
@@ -25,7 +25,7 @@ groups:
 
     - alert: MongodbReplicationLag
       expr: '(mongodb_rs_members_optimeDate{member_state="PRIMARY"} - on (set) group_right mongodb_rs_members_optimeDate{member_state="SECONDARY"}) / 1000 > 10'
-      for: 0m
+      for: 1m
       labels:
         severity: critical
       annotations:
@@ -34,7 +34,7 @@ groups:
 
     - alert: MongodbReplicationHeadroom
       expr: 'sum(avg(mongodb_mongod_replset_oplog_head_timestamp - mongodb_mongod_replset_oplog_tail_timestamp)) - sum(avg(mongodb_rs_members_optimeDate{member_state="PRIMARY"} - on (set) group_right mongodb_rs_members_optimeDate{member_state="SECONDARY"})) <= 0'
-      for: 0m
+      for: 2m
       labels:
         severity: critical
       annotations:
