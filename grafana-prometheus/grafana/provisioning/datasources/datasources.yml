@@ -24,9 +24,9 @@ datasources:
       httpHeaderName1: X-Scope-OrgID
       derivedFields:
         - datasourceUid: tempo
-          matcherRegex: "[Tt][Rr][Aa][Cc][Ee][_-]?[Ii][Dd][=:]\\s*[\"']?([a-fA-F0-9]{16,32})[\"']?"
-          name: TraceID
-          url: "/explore?orgId=1&left=%5B%22now-1h%22,%22now%22,%22Tempo%22%5D%7B%22query%22:%22$${__value.raw}%22%7D"
+          matcherRegex: "[Tt][Rr][Aa][Cc][Ee][_-]?[Ii][Dd][\\\"']?[:=]\\s*[\\\"']?([a-fA-F0-9]{16,32})[\\\"']?"
+          name: trace_id
+          url: "$${__value.raw}"
 
     secureJsonData:
       httpHeaderValue1: "1"
@@ -49,11 +49,11 @@ datasources:
         hide: false
       tracesToLogs:
         datasourceUid: loki
-        tags: ["job", "instance", "pod", "namespace"]
-        mappedTags: [{ key: "service.name", value: "service" }]
+        tags: []
+        mappedTags: [{ key: "service.name", value: "service_name" }]
         mapTagNamesEnabled: false
-        spanStartTimeShift: "0"
-        spanEndTimeShift: "0"
+        spanStartTimeShift: "-1h"
+        spanEndTimeShift: "1h"
         filterByTraceID: true
         filterBySpanID: false
 
