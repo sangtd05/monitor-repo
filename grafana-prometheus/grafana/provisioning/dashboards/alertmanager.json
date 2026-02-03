@@ -11140,9 +11140,9 @@
     "list": [
       {
         "current": {
-          "tags": [],
-          "text": "default",
-          "value": "default"
+          "selected": true,
+          "text": "Mimir",
+          "value": "mimir"
         },
         "hide": 0,
         "includeAll": false,

@@ -490,10 +490,9 @@
     "list": [
       {
         "current": {
-          "selected": false,
-          "tags": [],
-          "text": "default",
-          "value": "default"
+          "selected": true,
+          "text": "Mimir",
+          "value": "mimir"
         },
         "hide": 0,
         "includeAll": false,

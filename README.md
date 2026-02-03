@@ -1,6 +1,6 @@
-# System Monitor (LGTM Stack)
+# Modern Observability Stack (LGTM + Alloy)
 
-Hệ thống giám sát toàn diện dựa trên **LGTM Stack** (Loki, Grafana, Tempo, Mimir) kết hợp với **Grafana Alloy**. Được thiết kế để giám sát metrics hệ thống, application traces, logs, và hiệu suất database (MongoDB, PostgreSQL).
+Hệ thống giám sát hiện đại dựa trên **LGTM Stack** (Loki, Grafana, Tempo, Mimir) với **Grafana Alloy** làm unified agent thu thập toàn bộ telemetry data. Được thiết kế để giám sát metrics, logs, traces và hiệu suất hạ tầng một cách tối ưu.
 
 ## Kiến trúc hệ thống
 
@@ -8,21 +8,21 @@ Hệ thống giám sát toàn diện dựa trên **LGTM Stack** (Loki, Grafana, 
 
 | Component | Chức năng | Port | Ghi chú |
 |-----------|-----------|------|---------|
-| **Grafana** | Visualization & Dashboarding | `3000` | Giao diện trực quan hóa dữ liệu |
-| **Prometheus** | Metrics Collection & Storage | `9090` | Thu thập metrics ngắn hạn |
+| **Grafana** | Visualization & Dashboarding | `3000` | Giao diện trực quan hóa + Unified Alerting |
+| **Mimir** | Long-term Metrics Storage + Ruler | `9009` | Lưu trữ metrics & Đánh giá alert rules |
 | **Mimir** | Long-term Metrics Storage | `9009` | Lưu trữ metrics dài hạn |
 | **MinIO** | S3-compatible Object Storage | `9000`, `9001` | Object storage cho Mimir & Tempo |
 | **Loki** | Log Aggregation | `3100` | Thu thập và lưu trữ logs |
 | **Tempo** | Distributed Tracing | `3200` | Distributed tracing backend |
 | **Pyroscope** | Continuous Profiling | `4040` | Profiling ứng dụng |
 | **Alertmanager** | Alerting System | `9093` | Cảnh báo qua Telegram |
-| **Grafana Alloy** | Unified Observability Agent | `4317`, `4318`, `12345` | **Thay thế Promtail + OTel Collector** |
+| **Grafana Alloy** | Unified Observability Agent | `4317`, `4318`, `12345` | **Thu thập TOÀN BỘ: Metrics, Logs, Traces** |
 | **Blackbox Exporter** | Synthetic Monitoring | `9115` | Health checks cho services |
 | **Node Exporter** | Host Metrics Exporter | `9100` | Metrics của monitoring server |
 
 ### Grafana Alloy - Unified Agent
 
-**Grafana Alloy** là agent thống nhất thay thế cho **Promtail** và **OpenTelemetry Collector**, cung cấp:
+**Grafana Alloy** là unified agent duy nhất thay thế **Promtail**, **OpenTelemetry Collector** VÀ **Prometheus scraping**, cung cấp:
 
 #### Logs Collection (thay thế Promtail)
 - **Docker Logs**: Tự động thu thập logs từ tất cả containers qua Docker socket
@@ -36,9 +36,30 @@ Hệ thống giám sát toàn diện dựa trên **LGTM Stack** (Loki, Grafana, 
 - **Memory Limiter**: Giới hạn 400MiB để tránh OOM
 - **Batch Processing**: Tối ưu hiệu suất với batching
 
+#### Metrics Collection (thay thế Prometheus scraping)
+- **Scrape tất cả exporters**: Node, cAdvisor, Nginx, MongoDB, PostgreSQL, Blackbox
+- **File-based Service Discovery**: Đọc targets từ `alloy/targets/*.json`
+- **Remote Write to Mimir**: Gửi metrics trực tiếp vào Mimir
+- **Filtering**: Loại bỏ OTLP internal metrics trước khi gửi
+
 #### Self-Monitoring
 - **Port `12345`**: Alloy metrics endpoint
-- Tự động gửi metrics của chính nó về Prometheus
+- Tự động scrape và gửi metrics của chính nó về Mimir
+
+### Mimir Ruler - Alert Evaluation
+
+**Mimir Ruler** thay thế Prometheus trong việc đánh giá alert rules:
+
+#### Alert Rule Evaluation
+- **Rules Directory**: `/data/mimir/rules/` - chứa tất cả alert rules (YAML format)
+- **Evaluation Interval**: 15s - tần suất đánh giá rules
+- **Global View**: Đánh giá alerts dựa trên toàn bộ metrics trong Mimir (không giới hạn như Prometheus)
+- **Alertmanager Integration**: Gửi alerts trực tiếp đến Alertmanager
+
+#### Ưu điểm so với Prometheus
+- **Scale tốt hơn**: Phân tán, high availability
+- **Multi-tenancy**: Hỗ trợ nhiều tenants
+- **Consistent with storage**: Rules chạy trên cùng data storage với queries
 
 ### Database Monitoring
 
@@ -80,9 +101,9 @@ MINIO_ROOT_PASSWORD=mimir123
 
 #### Monitoring Targets (JSON)
 
-Để thêm/xóa servers cần giám sát, chỉnh sửa các file JSON trong `grafana-prometheus/prometheus/targets/`:
+Để thêm/xóa servers cần giám sát, chỉnh sửa các file JSON trong `alloy/targets/`:
 
-**Node Exporter** (`targets/node.json`):
+**Node Exporter** (`alloy/targets/node.json`):
 ```json
 [
   {
@@ -161,7 +182,27 @@ MINIO_ROOT_PASSWORD=mimir123
 ]
 ```
 
-> **Lưu ý**: Prometheus tự động reload cấu hình khi các file JSON thay đổi (File-based Service Discovery).
+> **Lưu ý**: Alloy tự động reload cấu hình khi các file JSON thay đổi (File-based Service Discovery).
+
+#### Alert Rules
+
+Alert rules được lưu trong `mimir/rules/*.yml` theo format Prometheus:
+
+```yaml
+groups:
+  - name: node_exporter
+    interval: 30s
+    rules:
+      - alert: NodeDown
+        expr: up{job="node_exporter"} == 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Node {{ $labels.instance }} is down"
+```
+
+> **Lưu ý**: Mimir Ruler tự động load rules từ `/data/mimir/rules/`. Không cần reload manually.
 
 ### 2. Khởi động Stack
 
@@ -185,7 +226,7 @@ docker-compose ps
 | Service | URL | Credentials |
 |---------|-----|-------------|
 | Grafana | http://localhost:3000 | admin / `${GRAFANA_PASSWORD}` |
-| Prometheus | http://localhost:9090 | - |
+| Mimir | http://localhost:9009/prometheus | - |
 | Alertmanager | http://localhost:9093 | - |
 | MinIO Console | http://localhost:9001 | mimir / mimir123 |
 | Alloy UI | http://localhost:12345 | - |
@@ -194,10 +235,15 @@ docker-compose ps
 
 ### 1. Metrics Flow
 ```
-Exporters (Node/Nginx/DB) 
-  → Prometheus (scrape every 15s)
-  → Mimir (long-term storage via remote_write)
+Exporters (Node/Nginx/DB/Blackbox) 
+  → Grafana Alloy (scrape every 15s)
+  → Mimir (remote_write for long-term storage)
   → Grafana (visualization)
+
+Alert Rules:
+  Mimir Ruler (evaluate rules from /data/mimir/rules/)
+  → Alertmanager (routing & grouping)
+  → Telegram (notifications)
 ```
 
 ### 2. Logs Flow
@@ -228,19 +274,23 @@ Prometheus (evaluate rules)
 ### Xem logs của một service cụ thể
 ```bash
 docker-compose logs -f alloy
-docker-compose logs -f prometheus
+docker-compose logs -f mimir
 docker-compose logs -f loki
 ```
 
 ### Restart một service
 ```bash
 docker-compose restart alloy
-docker-compose restart prometheus
+docker-compose restart mimir
 ```
 
-### Reload Prometheus configuration
+### Check Mimir Ruler status
 ```bash
-curl -X POST http://localhost:9090/-/reload
+# List all alert rules
+curl -s "http://localhost:9009/prometheus/api/v1/rules" | jq '.data.groups[].name'
+
+# Check specific rule group
+curl -s "http://localhost:9009/prometheus/api/v1/rules?type=alert" | jq
 ```
 
 ### Kiểm tra Alloy configuration
@@ -253,13 +303,15 @@ docker exec alloy alloy fmt /etc/alloy/config.alloy
 # Backup Grafana dashboards
 docker exec grafana grafana-cli admin export-dashboard
 
-# Backup Prometheus data
-docker run --rm -v prometheus-data:/data -v $(pwd):/backup alpine tar czf /backup/prometheus-backup.tar.gz /data
+### Backup alert rules
+```bash
+# Backup Mimir rules
+tar czf mimir-rules-backup.tar.gz mimir/rules/
 ```
 
 ## Alert Rules
 
-Hệ thống có sẵn các alert rules cho:
+Hệ thống sử dụng **Mimir Ruler** để evaluate alert rules, có sẵn các rules cho:
 
 - **Node Exporter**: CPU, Memory, Disk, Network
 - **Docker**: Container down, high resource usage
@@ -270,57 +322,79 @@ Hệ thống có sẵn các alert rules cho:
 - **Tempo**: Service latency, error rates, traffic anomalies
 - **Blackbox**: Health check failures, slow responses, flapping
 
-Xem chi tiết tại: `grafana-prometheus/prometheus/alerts/*.yml`
+Xem chi tiết tại: `mimir/rules/*.yml`
 
-### Cấu trúc Prometheus
+### Cấu trúc thư mục mới
 
 ```
-prometheus/
-├── targets/           # Service discovery files
-│   ├── node.json
-│   ├── cadvisor.json
-│   ├── nginx.json
-│   ├── mongodb.json
-│   ├── postgres.json
-│   ├── blackbox-liveness.json
-│   └── blackbox-readiness.json
-├── alerts/            # Alert rules
-│   ├── node-exporter.yml
-│   ├── docker.yml
-│   ├── lgtm-stack.yml
-│   ├── mongodb.yml
-│   ├── nginx.yml
-│   ├── postgresql.yml
-│   ├── tempo.yml
+grafana-prometheus/
+├── alloy/
+│   ├── config.alloy      # Alloy configuration (logs, traces, metrics)
+│   └── targets/          # Service discovery files for metrics
+│       ├── node.json
+│       ├── cadvisor.json
+│       ├── nginx.json
+│       ├── mongodb.json
+│       ├── postgres.json
+│       ├── blackbox-liveness.json
+│       └── blackbox-readiness.json
+├── mimir/
+│   ├── mimir-config.yml  # Mimir configuration (includes Ruler)
+│   ├── runtime.yml       # Mimir runtime config
+│   └── rules/            # Alert rules for Mimir Ruler
+│       ├── node-exporter.yml
+│       ├── docker.yml
+│       ├── lgtm-stack.yml
+│       ├── mongodb.yml
+│       ├── nginx.yml
+│       ├── postgresql.yml
+│       ├── tempo.yml
+│       └── blackbox.yml
+├── grafana/
+│   └── provisioning/     # Grafana datasources, dashboards, alerting
+├── loki/
+│   └── loki-config.yml
+├── tempo/
+│   └── tempo-config.yml
+├── alertmanager/
+│   └── alertmanager.yml.template
+├── blackbox/
 │   └── blackbox.yml
-└── prometheus.yml     # Main config
+├── docker-compose.yml
+└── .env
 ```
 
 ## 🔍 Troubleshooting
 
-### Alloy không thu thập được logs
+### Alloy không thu thập được metrics
 ```bash
-# Kiểm tra Alloy có quyền truy cập Docker socket
-docker exec alloy ls -la /var/run/docker.sock
+# Check Alloy UI for scrape targets status
+open http://localhost:12345
+
+# Check if target files exist
+ls -la alloy/targets/
 
 # Xem Alloy logs
 docker-compose logs -f alloy
 ```
 
-### Prometheus không scrape được targets
+### Mimir Ruler không load được rules
 ```bash
-# Kiểm tra targets status
-curl http://localhost:9090/api/v1/targets
+# Check Mimir logs
+docker-compose logs -f mimir | grep -i ruler
 
-# Kiểm tra file JSON targets
-cat grafana-prometheus/prometheus/targets/node.json
+# Verify rules directory is mounted
+docker exec mimir ls -la /data/mimir/rules/
+
+# Check rules API
+curl http://localhost:9009/prometheus/api/v1/rules
 ```
 
 ### Mimir không nhận được metrics
 ```bash
-# Kiểm tra remote write status
-curl http://localhost:9090/api/v1/status/tsdb
+# Query Mimir directly
+curl -s "http://localhost:9009/prometheus/api/v1/query?query=up" | jq
 
-# Kiểm tra Mimir logs
+# Check Mimir logs
 docker-compose logs -f mimir
 ```

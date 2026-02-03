@@ -57,7 +57,7 @@
   "links": [],
   "panels": [
     {
-      "datasource": "Prometheus",
+      "datasource": "Mimir",
       "description": "",
       "fieldConfig": {
         "defaults": {
@@ -620,7 +620,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "Prometheus",
+      "datasource": "Mimir",
       "description": "Returns how long the probe took to complete in seconds",
       "fieldConfig": {
         "defaults": {
@@ -718,7 +718,7 @@
     },
     {
       "collapsed": true,
-      "datasource": "Prometheus",
+      "datasource": "Mimir",
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -732,7 +732,7 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "Prometheus",
+          "datasource": "Mimir",
           "description": "Duration of http request by phase, summed over all redirects",
           "fieldConfig": {
             "defaults": {
@@ -852,7 +852,7 @@
       {
         "allValue": ".+",
         "current": {},
-        "datasource": "Prometheus",
+        "datasource": "Mimir",
         "definition": "label_values(probe_success, job)",
         "error": null,
         "hide": 0,
@@ -861,7 +861,10 @@
         "multi": false,
         "name": "job",
         "options": [],
-        "query": "label_values(probe_success, job)",
+        "query": {
+          "query": "label_values(probe_success, job)",
+          "refId": "StandardVariableQuery"
+        },
         "refresh": 1,
         "regex": "",
         "skipUrlSync": false,
@@ -875,7 +878,7 @@
       {
         "allValue": ".+",
         "current": {},
-        "datasource": "Prometheus",
+        "datasource": "Mimir",
         "definition": "label_values(probe_success{job=~\"$job\"}, instance)",
         "error": null,
         "hide": 0,

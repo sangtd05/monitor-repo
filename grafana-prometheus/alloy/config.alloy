@@ -228,8 +228,8 @@ otelcol.receiver.otlp "default" {
 
 otelcol.processor.memory_limiter "default" {
   check_interval = "1s"
-  limit          = "400MiB"
-  spike_limit    = "100MiB"
+  limit          = "3500MiB"
+  spike_limit    = "512MiB"
 
   output {
     metrics = [otelcol.processor.batch.default.input]
@@ -251,13 +251,7 @@ otelcol.processor.batch "default" {
 }
 
 otelcol.exporter.prometheus "otlp_metrics" {
-  forward_to = [prometheus.remote_write.otlp_metrics.receiver]
-}
-
-prometheus.remote_write "otlp_metrics" {
-  endpoint {
-    url = "http://prometheus:9090/api/v1/write"
-  }
+  forward_to = [prometheus.remote_write.mimir.receiver]
 }
 
 otelcol.exporter.loki "otlp_logs" {
@@ -269,6 +263,359 @@ otelcol.exporter.otlp "tempo" {
     endpoint = "tempo:4317"
     tls {
       insecure = true
+    }
+  }
+}
+
+// ============================================================================
+// PROMETHEUS METRICS COLLECTION
+// ============================================================================
+
+discovery.file "node_targets" {
+  files = ["/etc/alloy/targets/node.json"]
+}
+
+discovery.file "cadvisor_targets" {
+  files = ["/etc/alloy/targets/cadvisor.json"]
+}
+
+discovery.file "nginx_targets" {
+  files = ["/etc/alloy/targets/nginx.json"]
+}
+
+discovery.file "mongodb_targets" {
+  files = ["/etc/alloy/targets/mongodb.json"]
+}
+
+discovery.file "postgres_targets" {
+  files = ["/etc/alloy/targets/postgres.json"]
+}
+
+discovery.file "blackbox_liveness_targets" {
+  files = ["/etc/alloy/targets/blackbox-liveness.json"]
+}
+
+discovery.file "blackbox_readiness_targets" {
+  files = ["/etc/alloy/targets/blackbox-readiness.json"]
+}
+
+// ============================================================================
+// INTERNAL LGTM STACK SERVICES
+// ============================================================================
+
+prometheus.scrape "alertmanager" {
+  targets = [{
+    __address__ = "alertmanager:9093",
+  }]
+  forward_to = [prometheus.relabel.add_job_label_alertmanager.receiver]
+  scrape_interval = "15s"
+}
+
+prometheus.scrape "alloy_internal" {
+  targets = [{
+    __address__ = "localhost:12345",
+  }]
+  forward_to = [prometheus.relabel.add_job_label_alloy.receiver]
+  scrape_interval = "15s"
+}
+
+prometheus.scrape "loki" {
+  targets = [{
+    __address__ = "loki:3100",
+  }]
+  forward_to = [prometheus.relabel.add_job_label_loki.receiver]
+  scrape_interval = "15s"
+}
+
+prometheus.scrape "tempo" {
+  targets = [{
+    __address__ = "tempo:3200",
+  }]
+  forward_to = [prometheus.relabel.add_job_label_tempo.receiver]
+  scrape_interval = "15s"
+}
+
+prometheus.scrape "mimir" {
+  targets = [{
+    __address__ = "mimir:9009",
+  }]
+  forward_to = [prometheus.relabel.add_job_label_mimir.receiver]
+  scrape_interval = "15s"
+}
+
+prometheus.relabel "add_job_label_alertmanager" {
+  forward_to = [prometheus.remote_write.mimir.receiver]
+  
+  rule {
+    target_label = "job"
+    replacement  = "alertmanager"
+  }
+}
+
+prometheus.relabel "add_job_label_alloy" {
+  forward_to = [prometheus.remote_write.mimir.receiver]
+  
+  rule {
+    target_label = "job"
+    replacement  = "alloy"
+  }
+}
+
+prometheus.relabel "add_job_label_loki" {
+  forward_to = [prometheus.remote_write.mimir.receiver]
+  
+  rule {
+    target_label = "job"
+    replacement  = "loki"
+  }
+}
+
+prometheus.relabel "add_job_label_tempo" {
+  forward_to = [prometheus.remote_write.mimir.receiver]
+  
+  rule {
+    target_label = "job"
+    replacement  = "tempo"
+  }
+}
+
+prometheus.relabel "add_job_label_mimir" {
+  forward_to = [prometheus.remote_write.mimir.receiver]
+  
+  rule {
+    target_label = "job"
+    replacement  = "mimir"
+  }
+}
+
+// ============================================================================
+// NODE EXPORTER - LOCAL (MONITORING SERVER)
+// ============================================================================
+
+prometheus.scrape "node_exporter_local" {
+  targets = [{
+    __address__ = "node-exporter:9100",
+    instance = "monitoring-server",
+    environment = "production",
+    role = "monitoring",
+  }]
+  forward_to = [prometheus.relabel.add_job_label_node_local.receiver]
+  scrape_interval = "30s"
+  scrape_timeout = "25s"
+}
+
+prometheus.relabel "add_job_label_node_local" {
+  forward_to = [prometheus.remote_write.mimir.receiver]
+  
+  rule {
+    target_label = "job"
+    replacement  = "node-exporter-local"
+  }
+}
+
+// ============================================================================
+// NODE EXPORTER - REMOTE SERVERS
+// ============================================================================
+
+prometheus.scrape "node_exporter" {
+  targets = discovery.file.node_targets.targets
+  forward_to = [prometheus.remote_write.mimir.receiver]
+  scrape_interval = "15s"
+}
+
+// ============================================================================
+// CADVISOR
+// ============================================================================
+
+prometheus.scrape "cadvisor" {
+  targets = discovery.file.cadvisor_targets.targets
+  forward_to = [prometheus.relabel.add_job_label_cadvisor.receiver]
+  scrape_interval = "15s"
+}
+
+prometheus.relabel "add_job_label_cadvisor" {
+  forward_to = [prometheus.remote_write.mimir.receiver]
+  
+  rule {
+    target_label = "job"
+    replacement  = "cadvisor"
+  }
+}
+
+// ============================================================================
+// NGINX EXPORTER
+// ============================================================================
+
+prometheus.scrape "nginx" {
+  targets = discovery.file.nginx_targets.targets
+  forward_to = [prometheus.relabel.add_job_label_nginx.receiver]
+  scrape_interval = "15s"
+}
+
+prometheus.relabel "add_job_label_nginx" {
+  forward_to = [prometheus.remote_write.mimir.receiver]
+  
+  rule {
+    target_label = "job"
+    replacement  = "nginx"
+  }
+}
+
+// ============================================================================
+// MONGODB EXPORTER
+// ============================================================================
+
+prometheus.scrape "mongodb" {
+  targets = discovery.file.mongodb_targets.targets
+  forward_to = [prometheus.remote_write.mimir.receiver]
+  scrape_interval = "15s"
+}
+
+// ============================================================================
+// POSTGRESQL EXPORTER
+// ============================================================================
+
+prometheus.scrape "postgres" {
+  targets = discovery.file.postgres_targets.targets
+  forward_to = [prometheus.remote_write.mimir.receiver]
+  scrape_interval = "15s"
+}
+
+// ============================================================================
+// BLACKBOX EXPORTER - HTTP LIVENESS PROBES
+// ============================================================================
+
+discovery.relabel "blackbox_liveness" {
+  targets = discovery.file.blackbox_liveness_targets.targets
+  
+  rule {
+    source_labels = ["__address__"]
+    target_label  = "__param_target"
+  }
+  
+  rule {
+    source_labels = ["__param_target"]
+    target_label  = "instance"
+  }
+  
+  rule {
+    target_label = "__address__"
+    replacement  = "blackbox-exporter:9115"
+  }
+  
+  rule {
+    source_labels = ["__param_target"]
+    regex         = "http://([^:]+):.*"
+    target_label  = "service"
+    replacement   = "$1"
+  }
+}
+
+prometheus.scrape "blackbox_http_liveness" {
+  targets = discovery.relabel.blackbox_liveness.output
+  forward_to = [prometheus.relabel.add_job_label_blackbox_liveness.receiver]
+  scrape_interval = "15s"
+  metrics_path = "/probe"
+  params = {
+    module = ["http_liveness"],
+  }
+}
+
+prometheus.relabel "add_job_label_blackbox_liveness" {
+  forward_to = [prometheus.remote_write.mimir.receiver]
+  
+  rule {
+    target_label = "job"
+    replacement  = "blackbox-http-liveness"
+  }
+}
+
+// ============================================================================
+// BLACKBOX EXPORTER - HTTP READINESS PROBES
+// ============================================================================
+
+discovery.relabel "blackbox_readiness" {
+  targets = discovery.file.blackbox_readiness_targets.targets
+  
+  rule {
+    source_labels = ["__address__"]
+    target_label  = "__param_target"
+  }
+  
+  rule {
+    source_labels = ["__param_target"]
+    target_label  = "instance"
+  }
+  
+  rule {
+    target_label = "__address__"
+    replacement  = "blackbox-exporter:9115"
+  }
+  
+  rule {
+    source_labels = ["__param_target"]
+    regex         = "http://([^:]+):.*"
+    target_label  = "service"
+    replacement   = "$1"
+  }
+}
+
+prometheus.scrape "blackbox_http_readiness" {
+  targets = discovery.relabel.blackbox_readiness.output
+  forward_to = [prometheus.relabel.add_job_label_blackbox_readiness.receiver]
+  scrape_interval = "15s"
+  metrics_path = "/probe"
+  params = {
+    module = ["http_readiness"],
+  }
+}
+
+prometheus.relabel "add_job_label_blackbox_readiness" {
+  forward_to = [prometheus.remote_write.mimir.receiver]
+  
+  rule {
+    target_label = "job"
+    replacement  = "blackbox-http-readiness"
+  }
+}
+
+// ============================================================================
+// REMOTE WRITE TO MIMIR
+// ============================================================================
+
+prometheus.remote_write "mimir" {
+  endpoint {
+    url = "http://mimir:9009/api/v1/push"
+    
+    headers = {
+      "X-Scope-OrgID" = "demo",
+    }
+    
+    queue_config {
+      capacity = 10000
+      max_shards = 10
+      min_shards = 1
+      max_samples_per_send = 5000
+      batch_send_deadline = "5s"
+      min_backoff = "30ms"
+      max_backoff = "5s"
+    }
+    
+    write_relabel_config {
+      source_labels = ["__name__"]
+      regex = "otelcol_.*"
+      action = "drop"
+    }
+    
+    write_relabel_config {
+      source_labels = ["__name__"]
+      regex = ".*\\..*"
+      action = "drop"
+    }
+    
+    write_relabel_config {
+      regex = "otel\\..*"
+      action = "labeldrop"
     }
   }
 }

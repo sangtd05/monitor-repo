@@ -2959,7 +2959,12 @@
         "query": "prometheus",
         "refresh": 1,
         "regex": "",
-        "type": "datasource"
+        "type": "datasource",
+        "current": {
+          "selected": true,
+          "text": "Mimir",
+          "value": "mimir"
+        }
       },
       {
         "auto": true,
