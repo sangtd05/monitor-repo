@@ -118,12 +118,6 @@ discovery.relabel "system_logs" {
     regex         = ".*(apport|dpkg|ubuntu-advantage|vmware|alternatives|bootstrap|cloud-init).*\\.log"
     action        = "drop"
   }
-
-  rule {
-    source_labels = ["__path__"]
-    regex         = ".*(syslog|auth\\.log|kern\\.log).*"
-    action        = "drop"
-  }
 }
 
 loki.source.file "system" {
@@ -133,7 +127,19 @@ loki.source.file "system" {
 
 loki.process "system_logs" {
   stage.regex {
-    expression = "^(?P<timestamp>\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d+Z)\\s+(?P<level>\\w+)\\s+(?P<message>.*)"
+    expression = "^(?P<timestamp>\\w{3}\\s+\\d+\\s+\\d{2}:\\d{2}:\\d{2})\\s+(?P<hostname>\\S+)\\s+(?P<process>\\S+):\\s+(?P<message>.*)"
+  }
+
+  stage.match {
+    selector = "{filename=~\"/var/log/syslog\"} |~ \"(?i)(info|debug)\""
+    action   = "drop"
+    drop_counter_reason = "syslog_noise"
+  }
+
+  stage.match {
+    selector = "{filename=~\"/var/log/kern.log\"} |~ \"(?i)(veth|br-|docker|promiscuous|forwarding state|disabled state|blocking state)\""
+    action   = "drop"
+    drop_counter_reason = "docker_network_noise"
   }
 
   stage.labels {
@@ -144,7 +150,7 @@ loki.process "system_logs" {
 
   stage.timestamp {
     source = "timestamp"
-    format = "RFC3339"
+    format = "Jan 02 15:04:05"
   }
 
   forward_to = [loki.write.default.receiver]
