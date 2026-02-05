@@ -37,13 +37,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: Validate Mimir Configuration YAML Syntax
+      - name: Validate Mimir Configuration
         run: |
-          # Install yq and validate YAML syntax
-          sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
-          sudo chmod +x /usr/local/bin/yq
-          yq eval '.' lgtm-stack/mimir/mimir-config.yml > /dev/null
-          echo "Mimir YAML syntax is valid"
+          timeout 10s docker run --rm -v ${{ github.workspace }}/lgtm-stack/mimir:/etc/mimir \
+            grafana/mimir:latest -config.file=/etc/mimir/mimir-config.yml -target=query-frontend || \
+          if [ $? -eq 124 ]; then echo "Mimir config is valid"; else exit 1; fi
 
   validate-mimir-alert-rules:
     runs-on: ubuntu-latest
