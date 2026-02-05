@@ -9,24 +9,90 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: Validate Docker Compose
-        run: docker compose -f grafana-prometheus/docker-compose.yml config
-  validate-prometheus:
+      - name: Validate LGTM Stack Docker Compose
+        run: docker compose -f lgtm-stack/docker-compose.yml config
+
+  validate-loki-config:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: Validate Prometheus Config
+      - name: Validate Loki Configuration
         run: |
-          docker run --rm --entrypoint /bin/promtool -v ${{ github.workspace }}/grafana-prometheus/prometheus:/etc/prometheus \
-            prom/prometheus:latest check config /etc/prometheus/prometheus.yml
-  validate-alert-rules:
+          docker run --rm -v ${{ github.workspace }}/lgtm-stack/loki:/etc/loki \
+            grafana/loki:latest -config.file=/etc/loki/loki-config.yml -verify-config
+
+  validate-tempo-config:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: Validate Alert Rules
+      - name: Validate Tempo Configuration
         run: |
-          for file in grafana-prometheus/prometheus/alerts/*.yml; do
+          docker run --rm -v ${{ github.workspace }}/lgtm-stack/tempo:/etc/tempo \
+            grafana/tempo:latest -config.file=/etc/tempo/tempo-config.yml -verify-config
+
+  validate-mimir-config:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Validate Mimir Configuration
+        run: |
+          docker run --rm -v ${{ github.workspace }}/lgtm-stack/mimir:/etc/mimir \
+            grafana/mimir:latest -config.file=/etc/mimir/mimir-config.yml -verify-config
+
+  validate-mimir-alert-rules:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install mimirtool
+        run: |
+          wget https://github.com/grafana/mimir/releases/latest/download/mimirtool-linux-amd64
+          chmod +x mimirtool-linux-amd64
+          sudo mv mimirtool-linux-amd64 /usr/local/bin/mimirtool
+      - name: Validate Mimir Alert Rules
+        run: |
+          for file in lgtm-stack/mimir/rules/demo/*.yml; do
             echo "Checking $file"
-            docker run --rm --entrypoint /bin/promtool -v ${{ github.workspace }}/grafana-prometheus/prometheus:/etc/prometheus \
-              prom/prometheus:latest check rules /etc/prometheus/alerts/$(basename "$file")
+            mimirtool rules verify "$file"
           done
+
+  validate-alloy-config:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Validate Alloy Configuration
+        run: |
+          docker run --rm -v ${{ github.workspace }}/lgtm-stack/alloy:/etc/alloy \
+            grafana/alloy:latest fmt /etc/alloy/config.alloy
+
+  validate-grafana-dashboards:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Validate Grafana Dashboards JSON
+        run: |
+          for file in lgtm-stack/grafana/provisioning/dashboards/*.json; do
+            echo "Validating $file"
+            if ! jq empty "$file" 2>/dev/null; then
+              echo "Invalid JSON in $file"
+              exit 1
+            fi
+            echo "Valid JSON: $file"
+          done
+
+  validate-alertmanager-config:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Check if Alertmanager config exists
+        id: check_alertmanager
+        run: |
+          if [ -f "lgtm-stack/alertmanager/alertmanager.yml" ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+      - name: Validate Alertmanager Configuration
+        if: steps.check_alertmanager.outputs.exists == 'true'
+        run: |
+          docker run --rm -v ${{ github.workspace }}/lgtm-stack/alertmanager:/etc/alertmanager \
+            prom/alertmanager:latest --config.file=/etc/alertmanager/alertmanager.yml --config.check
