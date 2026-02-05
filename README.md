@@ -1,5 +1,7 @@
 # Modern Observability Stack (LGTM + Alloy)
 
+[![CI](https://github.com/sangtd05/monitor-repo/actions/workflows/ci.yml/badge.svg)](https://github.com/sangtd05/monitor-repo/actions/workflows/ci.yml)
+
 Hệ thống giám sát hiện đại dựa trên **LGTM Stack** (Loki, Grafana, Tempo, Mimir) với **Grafana Alloy** làm unified agent thu thập toàn bộ telemetry data. Được thiết kế để giám sát metrics, logs, traces và hiệu suất hạ tầng một cách tối ưu.
 
 ## Kiến trúc hệ thống
@@ -10,7 +12,6 @@ Hệ thống giám sát hiện đại dựa trên **LGTM Stack** (Loki, Grafana,
 |-----------|-----------|------|---------|
 | **Grafana** | Visualization & Dashboarding | `3000` | Giao diện trực quan hóa + Unified Alerting |
 | **Mimir** | Long-term Metrics Storage + Ruler | `9009` | Lưu trữ metrics & Đánh giá alert rules |
-| **Mimir** | Long-term Metrics Storage | `9009` | Lưu trữ metrics dài hạn |
 | **MinIO** | S3-compatible Object Storage | `9000`, `9001` | Object storage cho Mimir & Tempo |
 | **Loki** | Log Aggregation | `3100` | Thu thập và lưu trữ logs |
 | **Tempo** | Distributed Tracing | `3200` | Distributed tracing backend |
@@ -38,7 +39,7 @@ Hệ thống giám sát hiện đại dựa trên **LGTM Stack** (Loki, Grafana,
 
 #### Metrics Collection (thay thế Prometheus scraping)
 - **Scrape tất cả exporters**: Node, cAdvisor, Nginx, MongoDB, PostgreSQL, Blackbox
-- **File-based Service Discovery**: Đọc targets từ `alloy/targets/*.json`
+- **File-based Service Discovery**: Đọc targets từ `lgtm-stack/alloy/targets/*.json`
 - **Remote Write to Mimir**: Gửi metrics trực tiếp vào Mimir
 - **Filtering**: Loại bỏ OTLP internal metrics trước khi gửi
 
@@ -51,15 +52,28 @@ Hệ thống giám sát hiện đại dựa trên **LGTM Stack** (Loki, Grafana,
 **Mimir Ruler** thay thế Prometheus trong việc đánh giá alert rules:
 
 #### Alert Rule Evaluation
-- **Rules Directory**: `/data/mimir/rules/` - chứa tất cả alert rules (YAML format)
+- **Rules Directory**: `lgtm-stack/mimir/rules/demo/` - chứa tất cả alert rules (YAML format)
 - **Evaluation Interval**: 15s - tần suất đánh giá rules
 - **Global View**: Đánh giá alerts dựa trên toàn bộ metrics trong Mimir (không giới hạn như Prometheus)
 - **Alertmanager Integration**: Gửi alerts trực tiếp đến Alertmanager
 
-#### Ưu điểm so với Prometheus
-- **Scale tốt hơn**: Phân tán, high availability
-- **Multi-tenancy**: Hỗ trợ nhiều tenants
-- **Consistent with storage**: Rules chạy trên cùng data storage với queries
+### Data Retention
+
+#### Tempo (Traces)
+- **Retention Period**: 168h (7 ngày)
+- **Configuration**: `overrides.block_retention` trong `tempo-config.yml`
+- **Storage**: MinIO S3-compatible storage
+- **Auto Cleanup**: Tempo tự động xóa trace blocks cũ hơn retention period
+
+#### Mimir (Metrics)
+- **TSDB Local**: 24h (dữ liệu mới trong ingester)
+- **Compactor Blocks**: 30d (dữ liệu lâu dài trong S3)
+- **Configuration**: `limits.compactor_blocks_retention_period` trong `mimir-config.yml`
+- **Auto Compaction**: Mimir tự động compact và xóa blocks cũ
+
+#### Loki (Logs)
+- **Retention Period**: Cấu hình trong `loki-config.yml`
+- **Storage**: Local filesystem hoặc S3
 
 ### Database Monitoring
 
@@ -77,9 +91,10 @@ Hệ thống giám sát hiện đại dựa trên **LGTM Stack** (Loki, Grafana,
 
 #### Environment Variables (`.env`)
 
-Tạo file `.env` trong thư mục `grafana-prometheus/`:
+Tạo file `.env` trong thư mục `lgtm-stack/`:
 
 ```bash
+cd lgtm-stack
 cp .env.example .env
 ```
 
@@ -101,7 +116,7 @@ MINIO_ROOT_PASSWORD=mimir123
 
 #### Monitoring Targets (JSON)
 
-Để thêm/xóa servers cần giám sát, chỉnh sửa các file JSON trong `alloy/targets/`:
+Để thêm/xóa servers cần giám sát, chỉnh sửa các file JSON trong `lgtm-stack/alloy/targets/`:
 
 **Node Exporter** (`alloy/targets/node.json`):
 ```json
@@ -116,7 +131,7 @@ MINIO_ROOT_PASSWORD=mimir123
 ]
 ```
 
-**Nginx** (`targets/nginx.json`):
+**Nginx** (`alloy/targets/nginx.json`):
 ```json
 [
   {
@@ -128,7 +143,7 @@ MINIO_ROOT_PASSWORD=mimir123
 ]
 ```
 
-**cAdvisor** (`targets/cadvisor.json`):
+**cAdvisor** (`alloy/targets/cadvisor.json`):
 ```json
 [
   {
@@ -140,7 +155,7 @@ MINIO_ROOT_PASSWORD=mimir123
 ]
 ```
 
-**MongoDB** (`targets/mongodb.json`):
+**MongoDB** (`alloy/targets/mongodb.json`):
 ```json
 [
   {
@@ -153,7 +168,7 @@ MINIO_ROOT_PASSWORD=mimir123
 ]
 ```
 
-**PostgreSQL** (`targets/postgres.json`):
+**PostgreSQL** (`alloy/targets/postgres.json`):
 ```json
 [
   {
@@ -166,7 +181,7 @@ MINIO_ROOT_PASSWORD=mimir123
 ]
 ```
 
-**Blackbox Health Checks** (`targets/blackbox-liveness.json`, `targets/blackbox-readiness.json`):
+**Blackbox Health Checks** (`alloy/targets/blackbox-liveness.json`, `alloy/targets/blackbox-readiness.json`):
 ```json
 [
   {
@@ -186,7 +201,7 @@ MINIO_ROOT_PASSWORD=mimir123
 
 #### Alert Rules
 
-Alert rules được lưu trong `mimir/rules/*.yml` theo format Prometheus:
+Alert rules được lưu trong `lgtm-stack/mimir/rules/demo/*.yml` theo format Prometheus:
 
 ```yaml
 groups:
@@ -207,7 +222,7 @@ groups:
 ### 2. Khởi động Stack
 
 ```bash
-cd grafana-prometheus
+cd lgtm-stack
 docker-compose up -d
 ```
 
@@ -230,94 +245,3 @@ docker-compose ps
 | Alertmanager | http://localhost:9093 | - |
 | MinIO Console | http://localhost:9001 | mimir / mimir123 |
 | Alloy UI | http://localhost:12345 | - |
-
-## Data Flow
-
-### 1. Metrics Flow
-```
-Exporters (Node/Nginx/DB/Blackbox) 
-  → Grafana Alloy (scrape every 15s)
-  → Mimir (remote_write for long-term storage)
-  → Grafana (visualization)
-
-Alert Rules:
-  Mimir Ruler (evaluate rules from /data/mimir/rules/)
-  → Alertmanager (routing & grouping)
-  → Telegram (notifications)
-```
-
-### 2. Logs Flow
-```
-Docker Containers / System Logs
-  → Grafana Alloy (collection & processing)
-  → Loki (storage & indexing)
-  → Grafana (visualization & search)
-```
-
-### 3. Traces Flow
-```
-Applications (OTLP)
-  → Grafana Alloy (port 4317/4318)
-  → Tempo (storage in MinIO)
-  → Grafana (visualization & analysis)
-```
-
-### 4. Alerts Flow
-```
-Prometheus (evaluate rules)
-  → Alertmanager (routing & grouping)
-  → Telegram (notifications)
-```
-
-## Quản lý và Bảo trì
-
-### Xem logs của một service cụ thể
-```bash
-docker-compose logs -f alloy
-docker-compose logs -f mimir
-docker-compose logs -f loki
-```
-
-### Restart một service
-```bash
-docker-compose restart alloy
-docker-compose restart mimir
-```
-
-### Check Mimir Ruler status
-```bash
-# List all alert rules
-curl -s "http://localhost:9009/prometheus/api/v1/rules" | jq '.data.groups[].name'
-
-# Check specific rule group
-curl -s "http://localhost:9009/prometheus/api/v1/rules?type=alert" | jq
-```
-
-### Kiểm tra Alloy configuration
-```bash
-docker exec alloy alloy fmt /etc/alloy/config.alloy
-```
-
-### Backup dữ liệu
-```bash
-# Backup Grafana dashboards
-docker exec grafana grafana-cli admin export-dashboard
-
-### Backup alert rules
-```bash
-# Backup Mimir rules
-tar czf mimir-rules-backup.tar.gz mimir/rules/
-```
-
-## Alert Rules
-
-Hệ thống sử dụng **Mimir Ruler** để evaluate alert rules, có sẵn các rules cho:
-
-- **Node Exporter**: CPU, Memory, Disk, Network
-- **Docker**: Container down, high resource usage
-- **MongoDB**: Replication lag, connections, operations
-- **PostgreSQL**: Connections, locks, replication
-- **Nginx**: High error rate, response time
-- **LGTM Stack**: Service down, high resource usage
-- **Tempo**: Service latency, error rates, traffic anomalies
-- **Blackbox**: Health check failures, slow responses, flapping

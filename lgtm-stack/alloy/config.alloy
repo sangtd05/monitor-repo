@@ -86,7 +86,6 @@ loki.source.docker "containers" {
 }
 
 loki.process "docker_logs" {
-  // Drop corrupted logs (control characters)
   stage.drop {
     expression = ".*[\\x00-\\x08\\x0B\\x0C\\x0E-\\x1F].*"
     drop_counter_reason = "corrupted_log"
