@@ -25,23 +25,23 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: Validate Tempo Configuration
+      - name: Validate Tempo Configuration YAML Syntax
         run: |
-          # Run Tempo with the config and check if it starts without errors
-          timeout 10s docker run --rm -v ${{ github.workspace }}/lgtm-stack/tempo:/etc/tempo \
-            grafana/tempo:latest -config.file=/etc/tempo/tempo-config.yml -target=query-frontend || \
-          if [ $? -eq 124 ]; then echo "Tempo config is valid"; else exit 1; fi
+          # Validate YAML syntax only (runtime validation requires MinIO which isn't available in CI)
+          docker run --rm -v ${{ github.workspace }}/lgtm-stack/tempo:/etc/tempo \
+            --entrypoint /bin/sh grafana/tempo:latest \
+            -c "apk add --no-cache yq && yq eval '.' /etc/tempo/tempo-config.yml > /dev/null && echo 'Tempo YAML syntax is valid'"
 
   validate-mimir-config:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: Validate Mimir Configuration
+      - name: Validate Mimir Configuration YAML Syntax
         run: |
-          # Run Mimir with the config and check if it starts without errors
-          timeout 10s docker run --rm -v ${{ github.workspace }}/lgtm-stack/mimir:/etc/mimir \
-            grafana/mimir:latest -config.file=/etc/mimir/mimir-config.yml -target=query-frontend || \
-          if [ $? -eq 124 ]; then echo "Mimir config is valid"; else exit 1; fi
+          # Validate YAML syntax only (runtime validation requires MinIO which isn't available in CI)
+          docker run --rm -v ${{ github.workspace }}/lgtm-stack/mimir:/etc/mimir \
+            --entrypoint /bin/sh grafana/mimir:latest \
+            -c "apk add --no-cache yq && yq eval '.' /etc/mimir/mimir-config.yml > /dev/null && echo 'Mimir YAML syntax is valid'"
 
   validate-mimir-alert-rules:
     runs-on: ubuntu-latest
