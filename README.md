@@ -218,30 +218,3 @@ groups:
 ```
 
 > **Lưu ý**: Mimir Ruler tự động load rules từ `/data/mimir/rules/`. Không cần reload manually.
-
-### 2. Khởi động Stack
-
-```bash
-cd lgtm-stack
-docker-compose up -d
-```
-
-Kiểm tra logs:
-```bash
-docker-compose logs -f
-```
-
-Kiểm tra trạng thái:
-```bash
-docker-compose ps
-```
-
-### 3. Truy cập Services
-
-| Service | URL | Credentials |
-|---------|-----|-------------|
-| Grafana | http://localhost:3000 | admin / `${GRAFANA_PASSWORD}` |
-| Mimir | http://localhost:9009/prometheus | - |
-| Alertmanager | http://localhost:9093 | - |
-| MinIO Console | http://localhost:9001 | mimir / mimir123 |
-| Alloy UI | http://localhost:12345 | - |
