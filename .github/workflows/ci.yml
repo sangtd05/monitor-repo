@@ -27,9 +27,25 @@ jobs:
       - uses: actions/checkout@v3
       - name: Validate Tempo Configuration
         run: |
-          timeout 10s docker run --rm -v ${{ github.workspace }}/lgtm-stack/tempo:/etc/tempo \
-            grafana/tempo:latest -config.file=/etc/tempo/tempo-config.yml -target=query-frontend || \
-          if [ $? -eq 124 ]; then echo "Tempo config is valid"; else exit 1; fi
+          set +e
+          OUTPUT=$(docker run --rm -v ${{ github.workspace }}/lgtm-stack/tempo:/etc/tempo \
+            grafana/tempo:latest -config.file=/etc/tempo/tempo-config.yml -target=query-frontend 2>&1)
+          EXIT_CODE=$?
+          set -e
+          
+          if echo "$OUTPUT" | grep -q "Starting Tempo"; then
+            echo "Tempo config is valid (parsed and started successfully)"
+            echo "Note: Storage connection error is expected in CI (no MinIO available)"
+            exit 0
+          elif echo "$OUTPUT" | grep -q "failed parsing config"; then
+            echo "Tempo config parsing failed:"
+            echo "$OUTPUT"
+            exit 1
+          else
+            echo "Unexpected output:"
+            echo "$OUTPUT"
+            exit 1
+          fi
 
   validate-mimir-config:
     runs-on: ubuntu-latest
