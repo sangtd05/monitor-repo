@@ -1,0 +1,11 @@
+[
+    {
+        "targets": [
+            "http://10.170.100.125:3105/health/ready"
+        ],
+        "labels": {
+            "env": "production",
+            "probe_type": "readiness"
+        }
+    }
+]

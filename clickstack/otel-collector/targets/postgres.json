@@ -1,0 +1,12 @@
+[
+    {
+        "targets": [
+            "10.170.100.35:9187"
+        ],
+        "labels": {
+            "job": "postgres",
+            "env": "production",
+            "server": "db-server"
+        }
+    }
+]

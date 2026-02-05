@@ -1,0 +1,141 @@
+services:
+  clickstack:
+    image: clickhouse/clickstack-all-in-one:${CLICKSTACK_VERSION:-latest}
+    container_name: clickstack
+    ports:
+      - "8080:8080" # HyperDX UI
+      - "8000:8000" # HyperDX API
+      - "4317:4317" # OTLP gRPC
+      - "4318:4318" # OTLP HTTP
+      - "8123:8123" # ClickHouse HTTP
+      - "9000:9000" # ClickHouse Native
+    volumes:
+      - clickstack-db:/data/db
+      - clickstack-ch-data:/var/lib/clickhouse
+      - clickstack-ch-logs:/var/log/clickhouse-server
+    environment:
+      - HYPERDX_APP_URL=http://${SERVER_IP:-localhost}
+      - HYPERDX_LOG_LEVEL=${HYPERDX_LOG_LEVEL:-info}
+    restart: unless-stopped
+    networks:
+      - observability
+    healthcheck:
+      test: [ "CMD", "curl", "--fail", "http://localhost:8123/ping" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          memory: 8G
+          cpus: '4'
+        reservations:
+          memory: 4G
+
+  socat:
+    image: alpine/socat:1.8.0.3
+    container_name: socat
+    command: tcp-listen:2375,fork,reuseaddr unix-connect:/var/run/docker.sock
+    user: root
+    volumes:
+      - type: bind
+        source: /var/run/docker.sock
+        target: /var/run/docker.sock
+    restart: unless-stopped
+    networks:
+      - observability
+    healthcheck:
+      test: [ "CMD", "socat", "/dev/null", "tcp:localhost:2375" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:latest
+    container_name: otel-collector
+    command: [ "--config=/etc/otelcol-contrib/config.yaml" ]
+    volumes:
+      - ./otel-collector/otel-collector-config.yaml:/etc/otelcol-contrib/config.yaml:ro
+      - ./otel-collector/targets:/etc/otel/targets:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+    environment:
+      - HYPERDX_API_KEY=${HYPERDX_API_KEY}
+    network_mode: host
+    restart: unless-stopped
+    depends_on:
+      clickstack:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD", "wget", "--spider", "-q", "http://localhost:13133" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+          cpus: '2'
+        reservations:
+          memory: 512M
+
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: node-exporter
+    hostname: node-exporter
+    command:
+      - '--path.rootfs=/host'
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/host:ro,rslave
+      - /run/udev:/run/udev:ro
+    restart: unless-stopped
+    networks:
+      - observability
+    healthcheck:
+      test: [ "CMD", "wget", "-q", "-O", "/dev/null", "http://localhost:9100/" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+
+  blackbox-exporter:
+    image: prom/blackbox-exporter:latest
+    container_name: blackbox-exporter
+    hostname: blackbox-exporter
+    ports:
+      - "9115:9115"
+    volumes:
+      - ./blackbox/blackbox.yml:/etc/blackbox_exporter/config.yml:ro
+    command:
+      - '--config.file=/etc/blackbox_exporter/config.yml'
+    restart: unless-stopped
+    networks:
+      - observability
+    healthcheck:
+      test: [ "CMD", "wget", "--spider", "-q", "http://localhost:9115/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+
+volumes:
+  clickstack-db:
+    driver: local
+  clickstack-ch-data:
+    driver: local
+  clickstack-ch-logs:
+    driver: local
+  grafana-data:
+    driver: local
+
+networks:
+  observability:
+    name: clickstack-monitoring
+    driver: bridge

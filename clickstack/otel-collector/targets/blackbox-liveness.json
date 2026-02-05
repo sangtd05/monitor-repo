@@ -1,0 +1,15 @@
+[
+    {
+        "targets": [
+            "http://10.170.100.125:3064/health/live",
+            "http://10.170.100.125:3013/health/live",
+            "http://10.170.100.125:3014/health/live",
+            "http://10.170.100.125:3015/health/live",
+            "http://10.170.100.125:3105/health/live"
+        ],
+        "labels": {
+            "env": "production",
+            "probe_type": "liveness"
+        }
+    }
+]
