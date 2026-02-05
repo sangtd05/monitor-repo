@@ -23,10 +23,6 @@ ingester:
   max_block_duration: 30s
   complete_block_timeout: 1m
 
-compactor:
-  compaction:
-    block_retention: 168h
-
 storage:
   trace:
     backend: s3
@@ -70,3 +66,4 @@ metrics_generator:
 overrides:
   max_bytes_per_trace: 30000000
   metrics_generator_processors: [service-graphs, span-metrics]
+  block_retention: 168h
