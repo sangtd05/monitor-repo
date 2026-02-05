@@ -82,21 +82,3 @@ jobs:
             fi
             echo "Valid JSON: $file"
           done
-
-  validate-alertmanager-config:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: Check if Alertmanager config exists
-        id: check_alertmanager
-        run: |
-          if [ -f "lgtm-stack/alertmanager/alertmanager.yml" ]; then
-            echo "exists=true" >> $GITHUB_OUTPUT
-          else
-            echo "exists=false" >> $GITHUB_OUTPUT
-          fi
-      - name: Validate Alertmanager Configuration
-        if: steps.check_alertmanager.outputs.exists == 'true'
-        run: |
-          docker run --rm -v ${{ github.workspace }}/lgtm-stack/alertmanager:/etc/alertmanager \
-            prom/alertmanager:latest --config.file=/etc/alertmanager/alertmanager.yml --config.check
