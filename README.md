@@ -2,103 +2,103 @@
 
 [![CI](https://github.com/sangtd05/monitor-repo/actions/workflows/ci.yml/badge.svg)](https://github.com/sangtd05/monitor-repo/actions/workflows/ci.yml)
 
-Hệ thống giám sát hiện đại dựa trên **LGTM Stack** (Loki, Grafana, Tempo, Mimir) với **Grafana Alloy** làm unified agent thu thập toàn bộ telemetry data. Được thiết kế để giám sát metrics, logs, traces và hiệu suất hạ tầng một cách tối ưu.
+A modern monitoring system based on **LGTM Stack** (Loki, Grafana, Tempo, Mimir) with **Grafana Alloy** as the unified agent for collecting all telemetry data. Designed to optimally monitor metrics, logs, traces, and infrastructure performance.
 
-## Kiến trúc hệ thống
+## System Architecture
 
 ### Core Components
 
-| Component | Chức năng | Port | Ghi chú |
-|-----------|-----------|------|---------|
-| **Grafana** | Visualization & Dashboarding | `3000` | Giao diện trực quan hóa + Unified Alerting |
-| **Mimir** | Long-term Metrics Storage + Ruler | `9009` | Lưu trữ metrics & Đánh giá alert rules |
-| **MinIO** | S3-compatible Object Storage | `9000`, `9001` | Object storage cho Mimir & Tempo |
-| **Loki** | Log Aggregation | `3100` | Thu thập và lưu trữ logs |
+| Component | Function | Port | Notes |
+|-----------|----------|------|-------|
+| **Grafana** | Visualization & Dashboarding | `3000` | Visualization interface + Unified Alerting |
+| **Mimir** | Long-term Metrics Storage + Ruler | `9009` | Metrics storage & Alert rule evaluation |
+| **MinIO** | S3-compatible Object Storage | `9000`, `9001` | Object storage for Mimir & Tempo |
+| **Loki** | Log Aggregation | `3100` | Log collection and storage |
 | **Tempo** | Distributed Tracing | `3200` | Distributed tracing backend |
-| **Pyroscope** | Continuous Profiling | `4040` | Profiling ứng dụng |
-| **Alertmanager** | Alerting System | `9093` | Cảnh báo qua Telegram |
-| **Grafana Alloy** | Unified Observability Agent | `4317`, `4318`, `12345` | **Thu thập TOÀN BỘ: Metrics, Logs, Traces** |
-| **Blackbox Exporter** | Synthetic Monitoring | `9115` | Health checks cho services |
-| **Node Exporter** | Host Metrics Exporter | `9100` | Metrics của monitoring server |
+| **Pyroscope** | Continuous Profiling | `4040` | Application profiling |
+| **Alertmanager** | Alerting System | `9093` | Telegram notifications |
+| **Grafana Alloy** | Unified Observability Agent | `4317`, `4318`, `12345` | **Collects ALL: Metrics, Logs, Traces** |
+| **Blackbox Exporter** | Synthetic Monitoring | `9115` | Service health checks |
+| **Node Exporter** | Host Metrics Exporter | `9100` | Monitoring server metrics |
 
 ### Grafana Alloy - Unified Agent
 
-**Grafana Alloy** là unified agent duy nhất thay thế **Promtail**, **OpenTelemetry Collector** VÀ **Prometheus scraping**, cung cấp:
+**Grafana Alloy** is the single unified agent replacing **Promtail**, **OpenTelemetry Collector** AND **Prometheus scraping**, providing:
 
-#### Logs Collection (thay thế Promtail)
-- **Docker Logs**: Tự động thu thập logs từ tất cả containers qua Docker socket
-- **System Logs**: Thu thập logs từ `/var/log/*.log`
-- **Exporter Logs**: Thu thập riêng logs của các exporters
-- **Log Processing**: Lọc logs lỗi, logs cũ, và corrupted logs
+#### Logs Collection (replaces Promtail)
+- **Docker Logs**: Automatically collects logs from all containers via Docker socket
+- **System Logs**: Collects logs from `/var/log/*.log`
+- **Exporter Logs**: Separately collects exporter logs
+- **Log Processing**: Filters error logs, old logs, and corrupted logs
 
-#### Traces Collection (thay thế OTel Collector)
-- **OTLP gRPC**: Port `4317` - nhận traces từ applications
-- **OTLP HTTP**: Port `4318` - nhận traces qua HTTP
-- **Memory Limiter**: Giới hạn 400MiB để tránh OOM
-- **Batch Processing**: Tối ưu hiệu suất với batching
+#### Traces Collection (replaces OTel Collector)
+- **OTLP gRPC**: Port `4317` - receives traces from applications
+- **OTLP HTTP**: Port `4318` - receives traces via HTTP
+- **Memory Limiter**: 400MiB limit to prevent OOM
+- **Batch Processing**: Optimizes performance with batching
 
-#### Metrics Collection (thay thế Prometheus scraping)
-- **Scrape tất cả exporters**: Node, cAdvisor, Nginx, MongoDB, PostgreSQL, Blackbox
-- **File-based Service Discovery**: Đọc targets từ `lgtm-stack/alloy/targets/*.json`
-- **Remote Write to Mimir**: Gửi metrics trực tiếp vào Mimir
-- **Filtering**: Loại bỏ OTLP internal metrics trước khi gửi
+#### Metrics Collection (replaces Prometheus scraping)
+- **Scrapes all exporters**: Node, cAdvisor, Nginx, MongoDB, PostgreSQL, Blackbox
+- **File-based Service Discovery**: Reads targets from `lgtm-stack/alloy/targets/*.json`
+- **Remote Write to Mimir**: Sends metrics directly to Mimir
+- **Filtering**: Removes OTLP internal metrics before sending
 
 #### Self-Monitoring
 - **Port `12345`**: Alloy metrics endpoint
-- Tự động scrape và gửi metrics của chính nó về Mimir
+- Automatically scrapes and sends its own metrics to Mimir
 
 ### Mimir Ruler - Alert Evaluation
 
-**Mimir Ruler** thay thế Prometheus trong việc đánh giá alert rules:
+**Mimir Ruler** replaces Prometheus for alert rule evaluation:
 
 #### Alert Rule Evaluation
-- **Rules Directory**: `lgtm-stack/mimir/rules/demo/` - chứa tất cả alert rules (YAML format)
-- **Evaluation Interval**: 15s - tần suất đánh giá rules
-- **Global View**: Đánh giá alerts dựa trên toàn bộ metrics trong Mimir (không giới hạn như Prometheus)
-- **Alertmanager Integration**: Gửi alerts trực tiếp đến Alertmanager
+- **Rules Directory**: `lgtm-stack/mimir/rules/demo/` - contains all alert rules (YAML format)
+- **Evaluation Interval**: 15s - rule evaluation frequency
+- **Global View**: Evaluates alerts based on all metrics in Mimir (no limits like Prometheus)
+- **Alertmanager Integration**: Sends alerts directly to Alertmanager
 
 ### Data Retention
 
 #### Tempo (Traces)
-- **Retention Period**: 168h (7 ngày)
-- **Configuration**: `overrides.block_retention` trong `tempo-config.yml`
+- **Retention Period**: 168h (7 days)
+- **Configuration**: `overrides.block_retention` in `tempo-config.yml`
 - **Storage**: MinIO S3-compatible storage
-- **Auto Cleanup**: Tempo tự động xóa trace blocks cũ hơn retention period
+- **Auto Cleanup**: Tempo automatically deletes trace blocks older than retention period
 
 #### Mimir (Metrics)
-- **TSDB Local**: 24h (dữ liệu mới trong ingester)
-- **Compactor Blocks**: 30d (dữ liệu lâu dài trong S3)
-- **Configuration**: `limits.compactor_blocks_retention_period` trong `mimir-config.yml`
-- **Auto Compaction**: Mimir tự động compact và xóa blocks cũ
+- **TSDB Local**: 24h (recent data in ingester)
+- **Compactor Blocks**: 30d (long-term data in S3)
+- **Configuration**: `limits.compactor_blocks_retention_period` in `mimir-config.yml`
+- **Auto Compaction**: Mimir automatically compacts and deletes old blocks
 
 #### Loki (Logs)
-- **Retention Period**: Cấu hình trong `loki-config.yml`
-- **Storage**: Local filesystem hoặc S3
+- **Retention Period**: Configured in `loki-config.yml`
+- **Storage**: Local filesystem or S3
 
 ### Database Monitoring
 
 #### MongoDB Exporters
-- Giám sát MongoDB clusters
+- Monitors MongoDB clusters
 - Metrics: connections, operations, replication, storage
 
 #### PostgreSQL Exporters  
-- Giám sát PostgreSQL databases
+- Monitors PostgreSQL databases
 - Metrics: connections, queries, locks, replication
 
 ## Getting Started
 
-### 1. Cấu hình môi trường
+### 1. Environment Configuration
 
 #### Environment Variables (`.env`)
 
-Tạo file `.env` trong thư mục `lgtm-stack/`:
+Create `.env` file in `lgtm-stack/` directory:
 
 ```bash
 cd lgtm-stack
 cp .env.example .env
 ```
 
-Chỉnh sửa file `.env`:
+Edit the `.env` file:
 
 ```env
 # Grafana Admin Password
@@ -116,7 +116,7 @@ MINIO_ROOT_PASSWORD=mimir123
 
 #### Monitoring Targets (JSON)
 
-Để thêm/xóa servers cần giám sát, chỉnh sửa các file JSON trong `lgtm-stack/alloy/targets/`:
+To add/remove servers to monitor, edit JSON files in `lgtm-stack/alloy/targets/`:
 
 **Node Exporter** (`alloy/targets/node.json`):
 ```json
@@ -197,11 +197,11 @@ MINIO_ROOT_PASSWORD=mimir123
 ]
 ```
 
-> **Lưu ý**: Alloy tự động reload cấu hình khi các file JSON thay đổi (File-based Service Discovery).
+> **Note**: Alloy automatically reloads configuration when JSON files change (File-based Service Discovery).
 
 #### Alert Rules
 
-Alert rules được lưu trong `lgtm-stack/mimir/rules/demo/*.yml` theo format Prometheus:
+Alert rules are stored in `lgtm-stack/mimir/rules/demo/*.yml` in Prometheus format:
 
 ```yaml
 groups:
@@ -217,4 +217,4 @@ groups:
           summary: "Node {{ $labels.instance }} is down"
 ```
 
-> **Lưu ý**: Mimir Ruler tự động load rules từ `/data/mimir/rules/`. Không cần reload manually.
+> **Note**: Mimir Ruler automatically loads rules from `/data/mimir/rules/`. No manual reload needed.
