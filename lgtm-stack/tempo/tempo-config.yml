@@ -23,10 +23,6 @@ ingester:
   max_block_duration: 30s
   complete_block_timeout: 1m
 
-compactor:
-  compaction:
-    block_retention: 168h
-
 storage:
   trace:
     backend: s3
@@ -42,6 +38,7 @@ storage:
     pool:
       max_workers: 50
       queue_depth: 2000
+    block_retention: 168h
 
 metrics_generator:
   registry:
