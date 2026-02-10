@@ -51,6 +51,8 @@ metrics_generator:
         headers:
           X-Scope-OrgID: demo
         send_exemplars: true
+  traces_storage:
+    path: /var/tempo/generator/traces
   processor:
     service_graphs:
       max_items: 5000
