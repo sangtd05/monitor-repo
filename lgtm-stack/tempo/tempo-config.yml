@@ -62,8 +62,9 @@ metrics_generator:
         - service.name
         - http.route
         - span.kind
+    local_blocks: {}
 
 overrides:
   max_bytes_per_trace: 30000000
-  metrics_generator_processors: [service-graphs, span-metrics]
+  metrics_generator_processors: [service-graphs, span-metrics, local-blocks]
   block_retention: 168h
