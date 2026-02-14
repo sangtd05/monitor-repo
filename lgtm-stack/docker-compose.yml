@@ -104,25 +104,30 @@ services:
     networks:
       - monitoring
     healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://localhost:9000/"]
+      test: ["CMD", "curl", "-f", "http://localhost:9333/cluster/status"]
+      # test: ["CMD", "wget", "--spider", "-q", "http://localhost:9333/cluster/status"]
       interval: 30s
       timeout: 10s
       retries: 5
-      start_period: 30s
+      start_period: 15s
 
   seaweedfs-init:
-    image: curlimages/curl:8.18.0@sha256:d94d07ba9e7d6de898b6d96c1a072f6f8266c687af78a74f380087a0addf5d17
+    image: amazon/aws-cli:2.22.22
     container_name: seaweedfs-init
     depends_on:
       seaweedfs:
         condition: service_healthy
+    environment:
+      - AWS_ACCESS_KEY_ID=mimir
+      - AWS_SECRET_ACCESS_KEY=mimir123
+      - AWS_DEFAULT_REGION=us-east-1
     entrypoint: >
       /bin/sh -c "
       echo 'Waiting for SeaweedFS S3 to be ready...';
       sleep 5;
       for bucket in mimir-blocks mimir-ruler mimir-alertmanager tempo loki; do
         echo \"Creating bucket: $$bucket\";
-        curl -X PUT http://seaweedfs:9000/$$bucket || true;
+        aws --endpoint-url=http://seaweedfs:9000 s3 mb s3://$$bucket --region us-east-1 || echo \"Bucket $$bucket already exists or creation failed, continuing...\";
       done;
       echo 'Buckets created successfully';
       exit 0;
