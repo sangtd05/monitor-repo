@@ -88,7 +88,7 @@ services:
       start_period: 10s
 
   seaweedfs:
-    image: chrislusf/seaweedfs:3.81
+    image: chrislusf/seaweedfs:3.99@sha256:8d5b323911a996d5ea152115306bed468d9a849d72bcbb3800ea8d91b7728563
     container_name: seaweedfs
     command: "server -s3 -s3.port=9000 -dir=/data -s3.config=/etc/seaweedfs/s3.json"
     environment:
