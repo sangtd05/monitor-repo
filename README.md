@@ -1,6 +1,6 @@
 # Modern Observability Stack (LGTM + Alloy)
 
-[![CI](https://github.com/sangtd05/monitor-repo/actions/workflows/ci.yml/badge.svg)](https://github.com/sangtd05/monitor-repo/actions/workflows/ci.yml)
+[![CI](https://github.com/sangtd05/monitor-repo/actions/workflows/validate.yml/badge.svg)](https://github.com/sangtd05/monitor-repo/actions/workflows/validate.yml)
 
 A modern monitoring system based on **LGTM Stack** (Loki, Grafana, Tempo, Mimir) with **Grafana Alloy** as the unified agent for collecting all telemetry data. Designed to optimally monitor metrics, logs, traces, and infrastructure performance.
 
