@@ -1,6 +1,6 @@
 services:
   tempo:
-    image: grafana/tempo:2.4.1
+    image: grafana/tempo:2.4.1@sha256:5b9c08f6d8fb43b3b72dfd1252ba4f198b11a245257bf76ee2ca13e243bac565
     container_name: tempo
     command: ["-config.file=/etc/tempo/tempo-config.yml"]
     volumes:
@@ -22,7 +22,7 @@ services:
           memory: 512M
 
   loki:
-    image: grafana/loki:3.0.0
+    image: grafana/loki:3.0.0@sha256:757b5fadf816a1396f1fea598152947421fa49cb8b2db1ddd2a6e30fae003253
     container_name: loki
     volumes:
       - ./loki:/etc/loki
@@ -64,7 +64,7 @@ services:
       - loki
 
   alertmanager:
-    image: prom/alertmanager:v0.27.0
+    image: prom/alertmanager:v0.27.0@sha256:e13b6ed5cb929eeaee733479dce55e10eb3bc2e9c4586c705a4e8da41e5eacf5
     container_name: alertmanager
     volumes:
       - ./alertmanager:/etc/alertmanager
@@ -88,7 +88,7 @@ services:
       start_period: 10s
 
   minio:
-    image: minio/minio:RELEASE.2024-02-14T21-36-02Z
+    image: minio/minio:RELEASE.2024-02-14T21-36-02Z@sha256:c2fdee69c06f9825b48b8f300797a9b5e4b80059d385f02ddffd7719f1ffd912
     container_name: minio
     command: server /data --console-address ":9001"
     environment:
@@ -120,7 +120,7 @@ services:
       - monitoring
 
   mimir:
-    image: grafana/mimir:2.11.0
+    image: grafana/mimir:2.11.0@sha256:5758a0c571db4fd01990277ec58daecfd2cc299875486687d72843a21a80a345
     container_name: mimir
     command:
       - -config.file=/etc/mimir/mimir-config.yml
@@ -139,7 +139,7 @@ services:
       - minio-init
 
   grafana:
-    image: grafana/grafana:10.3.3
+    image: grafana/grafana:10.3.3@sha256:8640e5038e83ca4554ed56b9d76375158bcd51580238c6f5d8adaf3f20dd5379
     container_name: grafana
     ports:
       - 3000:3000
@@ -168,7 +168,7 @@ services:
       start_period: 10s
 
   node-exporter:
-    image: prom/node-exporter:v1.7.0
+    image: prom/node-exporter:v1.7.0@sha256:4cb2b9019f1757be8482419002cb7afe028fdba35d47958829e4cfeaf6246d80
     container_name: node-exporter
     command:
       - "--path.rootfs=/host"
@@ -191,7 +191,7 @@ services:
       start_period: 5s
 
   blackbox-exporter:
-    image: prom/blackbox-exporter:v0.24.0
+    image: prom/blackbox-exporter:v0.24.0@sha256:3af31f8bd1ad2907b4b0f7c485fde3de0a8ee0b498d42fc971f0698885c03acb
     container_name: blackbox-exporter
     ports:
       - 9115:9115
