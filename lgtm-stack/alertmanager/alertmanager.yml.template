@@ -6,14 +6,55 @@ route:
   group_wait: 30s
   group_interval: 5m
   repeat_interval: 3h
-  receiver: "telegram"
+  receiver: "telegram-platform"
+  
+  routes:
+    - match:
+        team: service
+      receiver: "telegram-service"
+      group_by: ["alertname", "instance"]
+    
+    - match:
+        team: platform
+      receiver: "telegram-platform"
+      group_by: ["alertname", "instance"]
+
+templates:
+  - '/etc/alertmanager/*.tmpl'
 
 receivers:
-  - name: "telegram"
+  - name: "telegram-service"
     telegram_configs:
       - bot_token: "${TELEGRAM_BOT_TOKEN}"
         api_url: https://api.telegram.org
-        chat_id: ${TELEGRAM_CHAT_ID}
+        chat_id: ${TELEGRAM_SERVICE_CHAT_ID}
+        parse_mode: "HTML"
+        message: |
+          {{ define "__alert_severity" }}{{ if eq . "critical" }}🔴{{ else if eq . "warning" }}🟠{{ else }}🔵{{ end }}{{ end }}
+          {{ define "__alert_status" }}{{ if eq . "firing" }}🔥 FIRING{{ else }}✅ RESOLVED{{ end }}{{ end }}
+          
+          {{ template "__alert_status" .Status }} ({{ .Alerts | len }})
+          
+          {{ range .Alerts }}
+          {{ template "__alert_severity" .Labels.severity }} <b>{{ .Labels.alertname }}</b>{{ if .Labels.component }} [{{ .Labels.component }}]{{ end }}
+          {{ if .Annotations.summary }}{{ .Annotations.summary }}{{ end }}
+          {{ if .Annotations.description }}
+          {{ .Annotations.description | reReplaceAll "\\n  VALUE = .+" "" | reReplaceAll "\\n  LABELS = .+" "" }}{{ end }}
+          {{- if .Labels.instance }}
+          <b>Instance:</b> <code>{{ .Labels.instance }}</code>{{ end }}
+          {{- if .Labels.job }} | <b>Job:</b> <code>{{ .Labels.job }}</code>{{ end }}
+          {{- if .Labels.device }} | <b>Device:</b> <code>{{ .Labels.device }}</code>{{ end }}
+          {{- if .Labels.mountpoint }} | <b>Mount:</b> <code>{{ .Labels.mountpoint }}</code>{{ end }}
+          {{- if .Labels.service_name }} | <b>Service:</b> <code>{{ .Labels.service_name }}</code>{{ end }}
+          
+          <b>Started:</b> {{ .StartsAt.Add 25200e9 | date "15:04:05 02/01/2006" }}
+          {{ end }}
+
+  - name: "telegram-platform"
+    telegram_configs:
+      - bot_token: "${TELEGRAM_BOT_TOKEN}"
+        api_url: https://api.telegram.org
+        chat_id: ${TELEGRAM_PLATFORM_CHAT_ID}
         parse_mode: "HTML"
         message: |
           {{ define "__alert_severity" }}{{ if eq . "critical" }}🔴{{ else if eq . "warning" }}🟠{{ else }}🔵{{ end }}{{ end }}

@@ -11,6 +11,7 @@ groups:
       expr: (time() - container_last_seen{name!="", name!~"runner.*"} > 60)
       for: 5m
       labels:
+        team: platform
         severity: warning
       annotations:
         summary: "Container killed: {{ $labels.name }} (instance {{ $labels.instance }})"
@@ -21,6 +22,7 @@ groups:
       expr: 'absent(container_last_seen)'
       for: 5m
       labels:
+        team: platform
         severity: warning
       annotations:
         summary: Container absent (instance {{ $labels.instance }})
@@ -30,6 +32,7 @@ groups:
       expr: '(sum(rate(container_cpu_usage_seconds_total{container!=""}[5m])) by (pod, container) / sum(container_spec_cpu_quota{container!=""}/container_spec_cpu_period{container!=""}) by (pod, container) * 100) > 80'
       for: 2m
       labels:
+        team: platform
         severity: warning
       annotations:
         summary: Container High CPU utilization (instance {{ $labels.instance }})
@@ -40,6 +43,7 @@ groups:
       expr: '(sum(container_memory_working_set_bytes{name!=""}) BY (instance, name) / sum(container_spec_memory_limit_bytes > 0) BY (instance, name) * 100) > 80'
       for: 2m
       labels:
+        team: platform
         severity: warning
       annotations:
         summary: Container High Memory usage (instance {{ $labels.instance }})
@@ -49,6 +53,7 @@ groups:
       expr: '(sum(container_fs_usage_bytes{name!="",name!~".*POD.*"}) BY (instance, name, device) / sum(container_fs_limit_bytes{name!="",name!~".*POD.*"} > 0) BY (instance, name, device) * 100) > 80'
       for: 5m
       labels:
+        team: platform
         severity: warning
       annotations:
         summary: Container Volume usage (instance {{ $labels.instance }})
@@ -58,6 +63,7 @@ groups:
       expr: 'sum(increase(container_cpu_cfs_throttled_periods_total{container!=""}[5m])) by (container, pod, namespace) / sum(increase(container_cpu_cfs_periods_total[5m])) by (container, pod, namespace) > ( 25 / 100 )'
       for: 5m
       labels:
+        team: platform
         severity: warning
       annotations:
         summary: Container high throttle rate (instance {{ $labels.instance }})

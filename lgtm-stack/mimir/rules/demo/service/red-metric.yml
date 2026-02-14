@@ -17,6 +17,7 @@ groups:
           )
         for: 10m
         labels:
+          team: service
           severity: warning
           component: tempo
           alert_type: performance
@@ -40,6 +41,7 @@ groups:
           )
         for: 5m
         labels:
+          team: service
           severity: critical
           component: tempo
           alert_type: performance
@@ -67,6 +69,7 @@ groups:
           )
         for: 10m
         labels:
+          team: service
           severity: warning
           component: tempo
           alert_type: reliability
@@ -94,6 +97,7 @@ groups:
           )
         for: 5m
         labels:
+          team: service
           severity: critical
           component: tempo
           alert_type: reliability
@@ -121,6 +125,7 @@ groups:
           )
         for: 10m
         labels:
+          team: service
           severity: critical
           component: tempo
           alert_type: reliability
@@ -136,6 +141,7 @@ groups:
           ) == 0
         for: 30m
         labels:
+          team: service
           severity: warning
           component: tempo
           alert_type: availability
@@ -163,6 +169,7 @@ groups:
           )
         for: 10m
         labels:
+          team: service
           severity: warning
           component: tempo
           alert_type: reliability
@@ -186,6 +193,7 @@ groups:
           )
         for: 15m
         labels:
+          team: service
           severity: warning
           component: tempo
           alert_type: performance

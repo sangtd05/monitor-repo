@@ -9,6 +9,7 @@ groups:
       expr: '(node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes < .10)'
       for: 2m
       labels:
+        team: platform
         severity: warning
       annotations:
         summary: Host out of memory (instance {{ $labels.instance }})
@@ -18,6 +19,7 @@ groups:
       expr: '(rate(node_vmstat_pgmajfault[5m]) > 1000)'
       for: 0m
       labels:
+        team: platform
         severity: warning
       annotations:
         summary: Host memory under memory pressure (instance {{ $labels.instance }})
@@ -37,6 +39,7 @@ groups:
       expr: '((rate(node_network_receive_bytes_total[5m]) / node_network_speed_bytes) > .80)'
       for: 0m
       labels:
+        team: platform
         severity: warning
       annotations:
         summary: Host unusual network throughput in (instance {{ $labels.instance }})
@@ -46,6 +49,7 @@ groups:
       expr: '((rate(node_network_transmit_bytes_total[5m]) / node_network_speed_bytes) > .80)'
       for: 0m
       labels:
+        team: platform
         severity: warning
       annotations:
         summary: Host unusual network throughput out (instance {{ $labels.instance }})
@@ -55,6 +59,7 @@ groups:
       expr: '(rate(node_disk_io_time_seconds_total[5m]) > .80)'
       for: 5m
       labels:
+        team: platform
         severity: warning
       annotations:
         summary: Host unusual disk read rate (instance {{ $labels.instance }})
@@ -67,6 +72,7 @@ groups:
       expr: '(node_filesystem_avail_bytes{fstype!~"^(fuse.*|tmpfs|cifs|nfs)"} / node_filesystem_size_bytes < .10 and on (instance, device, mountpoint) node_filesystem_readonly == 0)'
       for: 2m
       labels:
+        team: platform
         severity: critical
       annotations:
         summary: Host out of disk space (instance {{ $labels.instance }})
@@ -79,6 +85,7 @@ groups:
       expr: 'predict_linear(node_filesystem_avail_bytes{fstype!~"^(fuse.*|tmpfs|cifs|nfs)"}[3h], 86400) <= 0 and node_filesystem_avail_bytes > 0'
       for: 2m
       labels:
+        team: platform
         severity: warning
       annotations:
         summary: Host disk may fill in 24 hours (instance {{ $labels.instance }})
@@ -88,6 +95,7 @@ groups:
       expr: '(node_filesystem_files_free / node_filesystem_files < .10 and ON (instance, device, mountpoint) node_filesystem_readonly == 0)'
       for: 2m
       labels:
+        team: platform
         severity: critical
       annotations:
         summary: Host out of inodes (instance {{ $labels.instance }})
@@ -97,6 +105,7 @@ groups:
       expr: 'node_filesystem_device_error{fstype!~"^(fuse.*|tmpfs|cifs|nfs)",mountpoint!~"/data/docker/volumes/.*"} == 1'
       for: 2m
       labels:
+        team: platform
         severity: critical
       annotations:
         summary: Host filesystem device error (instance {{ $labels.instance }})
@@ -106,6 +115,7 @@ groups:
       expr: 'predict_linear(node_filesystem_files_free{fstype!~"^(fuse.*|tmpfs|cifs|nfs)"}[1h], 86400) <= 0 and node_filesystem_files_free > 0'
       for: 2m
       labels:
+        team: platform
         severity: warning
       annotations:
         summary: Host inodes may fill in 24 hours (instance {{ $labels.instance }})
@@ -115,6 +125,7 @@ groups:
       expr: '(rate(node_disk_read_time_seconds_total[1m]) / rate(node_disk_reads_completed_total[1m]) > 0.1 and rate(node_disk_reads_completed_total[1m]) > 0)'
       for: 2m
       labels:
+        team: platform
         severity: warning
       annotations:
         summary: Host unusual disk read latency (instance {{ $labels.instance }})
@@ -124,6 +135,7 @@ groups:
       expr: '(rate(node_disk_write_time_seconds_total[1m]) / rate(node_disk_writes_completed_total[1m]) > 0.1 and rate(node_disk_writes_completed_total[1m]) > 0)'
       for: 5m
       labels:
+        team: platform
         severity: warning
       annotations:
         summary: Host unusual disk write latency (instance {{ $labels.instance }})
@@ -133,6 +145,7 @@ groups:
       expr: '1 - (avg without (cpu) (rate(node_cpu_seconds_total{mode="idle"}[5m]))) > .80'
       for: 10m
       labels:
+        team: platform
         severity: warning
       annotations:
         summary: Host high CPU load (instance {{ $labels.instance }})
@@ -152,6 +165,7 @@ groups:
       expr: 'avg without (cpu) (rate(node_cpu_seconds_total{mode="steal"}[5m])) * 100 > 10'
       for: 0m
       labels:
+        team: platform
         severity: warning
       annotations:
         summary: Host CPU steal noisy neighbor (instance {{ $labels.instance }})
@@ -161,6 +175,7 @@ groups:
       expr: 'avg without (cpu) (rate(node_cpu_seconds_total{mode="iowait"}[5m])) > .10'
       for: 5m
       labels:
+        team: platform
         severity: warning
       annotations:
         summary: Host CPU high iowait (instance {{ $labels.instance }})
@@ -170,6 +185,7 @@ groups:
       expr: 'rate(node_disk_io_time_seconds_total[5m]) > 0.8'
       for: 5m
       labels:
+        team: platform
         severity: warning
       annotations:
         summary: Host unusual disk IO (instance {{ $labels.instance }})
@@ -191,6 +207,7 @@ groups:
       expr: '((1 - (node_memory_SwapFree_bytes / node_memory_SwapTotal_bytes)) * 100 > 80)'
       for: 2m
       labels:
+        team: platform
         severity: warning
       annotations:
         summary: Host swap is filling up (instance {{ $labels.instance }})
@@ -200,6 +217,7 @@ groups:
       expr: '(node_systemd_unit_state{state="failed"} == 1)'
       for: 0m
       labels:
+        team: platform
         severity: warning
       annotations:
         summary: Host systemd service crashed (instance {{ $labels.instance }})
@@ -209,6 +227,7 @@ groups:
       expr: 'node_hwmon_temp_celsius > node_hwmon_temp_max_celsius'
       for: 5m
       labels:
+        team: platform
         severity: warning
       annotations:
         summary: Host physical component too hot (instance {{ $labels.instance }})
@@ -218,6 +237,7 @@ groups:
       expr: '((node_hwmon_temp_crit_alarm_celsius == 1) or (node_hwmon_temp_alarm == 1))'
       for: 0m
       labels:
+        team: platform
         severity: critical
       annotations:
         summary: Host node overtemperature alarm (instance {{ $labels.instance }})
@@ -227,6 +247,7 @@ groups:
       expr: '((node_md_disks_required - on(device, instance) node_md_disks{state="active"}) > 0)'
       for: 0m
       labels:
+        team: platform
         severity: critical
       annotations:
         summary: Host software RAID insufficient drives (instance {{ $labels.instance }})
@@ -236,6 +257,7 @@ groups:
       expr: '(node_md_disks{state="failed"} > 0)'
       for: 2m
       labels:
+        team: platform
         severity: warning
       annotations:
         summary: Host software RAID disk failure (instance {{ $labels.instance }})
@@ -254,6 +276,7 @@ groups:
       expr: '(increase(node_vmstat_oom_kill[1m]) > 0)'
       for: 0m
       labels:
+        team: platform
         severity: warning
       annotations:
         summary: Host OOM kill detected (instance {{ $labels.instance }})
@@ -272,6 +295,7 @@ groups:
       expr: '(node_edac_uncorrectable_errors_total > 0)'
       for: 0m
       labels:
+        team: platform
         severity: warning
       annotations:
         summary: Host EDAC Uncorrectable Errors detected (instance {{ $labels.instance }})
@@ -281,6 +305,7 @@ groups:
       expr: '(rate(node_network_receive_errs_total[2m]) / rate(node_network_receive_packets_total[2m]) > 0.01)'
       for: 2m
       labels:
+        team: platform
         severity: warning
       annotations:
         summary: Host Network Receive Errors (instance {{ $labels.instance }})
@@ -290,6 +315,7 @@ groups:
       expr: '(rate(node_network_transmit_errs_total[2m]) / rate(node_network_transmit_packets_total[2m]) > 0.01)'
       for: 2m
       labels:
+        team: platform
         severity: warning
       annotations:
         summary: Host Network Transmit Errors (instance {{ $labels.instance }})
@@ -299,6 +325,7 @@ groups:
       expr: '((node_bonding_active - node_bonding_slaves) != 0)'
       for: 2m
       labels:
+        team: platform
         severity: warning
       annotations:
         summary: Host Network Bond Degraded (instance {{ $labels.instance }})
@@ -308,6 +335,7 @@ groups:
       expr: '(node_nf_conntrack_entries / node_nf_conntrack_entries_limit > 0.8)'
       for: 5m
       labels:
+        team: platform
         severity: warning
       annotations:
         summary: Host conntrack limit (instance {{ $labels.instance }})
@@ -317,6 +345,7 @@ groups:
       expr: '((node_timex_offset_seconds > 0.05 and deriv(node_timex_offset_seconds[5m]) >= 0) or (node_timex_offset_seconds < -0.05 and deriv(node_timex_offset_seconds[5m]) <= 0))'
       for: 10m
       labels:
+        team: platform
         severity: warning
       annotations:
         summary: Host clock skew (instance {{ $labels.instance }})
@@ -326,6 +355,7 @@ groups:
       expr: '(min_over_time(node_timex_sync_status[1m]) == 0 and node_timex_maxerror_seconds >= 16)'
       for: 2m
       labels:
+        team: platform
         severity: warning
       annotations:
         summary: Host clock not synchronising (instance {{ $labels.instance }})

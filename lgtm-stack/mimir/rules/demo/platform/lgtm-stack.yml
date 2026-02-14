@@ -5,6 +5,7 @@ groups:
         expr: 'changes(process_start_time_seconds{job=~".*loki.*"}[15m]) > 2'
         for: 0m
         labels:
+          team: platform
           severity: warning
           component: loki
         annotations:
@@ -15,6 +16,7 @@ groups:
         expr: '100 * sum(rate(loki_request_duration_seconds_count{status_code=~"5.."}[1m])) by (namespace, job, route) / sum(rate(loki_request_duration_seconds_count[1m])) by (namespace, job, route) > 10'
         for: 15m
         labels:
+          team: platform
           severity: critical
           component: loki
         annotations:
@@ -25,6 +27,7 @@ groups:
         expr: "sum(increase(loki_panic_total[10m])) by (namespace, job) > 0"
         for: 5m
         labels:
+          team: platform
           severity: critical
           component: loki
         annotations:
@@ -35,6 +38,7 @@ groups:
         expr: '(histogram_quantile(0.99, sum(rate(loki_request_duration_seconds_bucket{route!~"(?i).*tail.*"}[5m])) by (le)))  > 1'
         for: 5m
         labels:
+          team: platform
           severity: critical
           component: loki
         annotations:
@@ -47,6 +51,7 @@ groups:
         expr: 'up{job="alloy"} == 0'
         for: 1m
         labels:
+          team: platform
           severity: critical
           component: alloy
         annotations:
@@ -57,6 +62,7 @@ groups:
         expr: "alloy_component_controller_running_components < 1"
         for: 2m
         labels:
+          team: platform
           severity: warning
           component: alloy
         annotations:
@@ -67,6 +73,7 @@ groups:
         expr: 'rate(otelcol_receiver_refused_spans{job="alloy"}[5m]) > 0'
         for: 5m
         labels:
+          team: platform
           severity: critical
           component: alloy
         annotations:
@@ -77,6 +84,7 @@ groups:
         expr: 'rate(otelcol_exporter_send_failed_spans{job="alloy"}[5m]) > 0'
         for: 5m
         labels:
+          team: platform
           severity: warning
           component: alloy
         annotations:
@@ -87,6 +95,7 @@ groups:
         expr: 'rate(loki_write_errors_total{job="alloy"}[5m]) > 0'
         for: 5m
         labels:
+          team: platform
           severity: critical
           component: alloy
         annotations:
@@ -97,6 +106,7 @@ groups:
         expr: '(process_resident_memory_bytes{job="alloy"} / 1024 / 1024 / 1024) > 3'
         for: 5m
         labels:
+          team: platform
           severity: warning
           component: alloy
         annotations:
@@ -107,6 +117,7 @@ groups:
         expr: 'rate(process_cpu_seconds_total{job="alloy"}[5m]) > 0.8'
         for: 10m
         labels:
+          team: platform
           severity: warning
           component: alloy
         annotations:
@@ -119,6 +130,7 @@ groups:
         expr: 'up{job="tempo"} == 0'
         for: 1m
         labels:
+          team: platform
           severity: critical
           component: tempo
         annotations:
@@ -129,6 +141,7 @@ groups:
         expr: '(process_resident_memory_bytes{job="tempo"} / 1024 / 1024 / 1024) > 1.5'
         for: 5m
         labels:
+          team: platform
           severity: warning
           component: tempo
         annotations:
@@ -139,6 +152,7 @@ groups:
         expr: 'rate(process_cpu_seconds_total{job="tempo"}[5m]) > 0.8'
         for: 10m
         labels:
+          team: platform
           severity: warning
           component: tempo
         annotations:
@@ -149,6 +163,7 @@ groups:
         expr: 'sum(rate(tempo_request_duration_seconds_count{status_code=~"5.."}[5m])) by (route) > 0'
         for: 5m
         labels:
+          team: platform
           severity: critical
           component: tempo
         annotations:
@@ -159,6 +174,7 @@ groups:
         expr: "increase(tempo_ingester_flush_failed_retries_total[5m]) > 0"
         for: 5m
         labels:
+          team: platform
           severity: warning
           component: tempo
         annotations:
@@ -171,6 +187,7 @@ groups:
         expr: 'up{job="mimir"} == 0'
         for: 1m
         labels:
+          team: platform
           severity: critical
           component: mimir
         annotations:
@@ -181,6 +198,7 @@ groups:
         expr: '100 * sum(rate(cortex_request_duration_seconds_count{status_code=~"5.."}[1m])) by (route) / sum(rate(cortex_request_duration_seconds_count[1m])) by (route) > 10'
         for: 5m
         labels:
+          team: platform
           severity: critical
           component: mimir
         annotations:
@@ -191,6 +209,7 @@ groups:
         expr: 'cortex_ring_members{state="Unhealthy", name="ingester"} > 0'
         for: 5m
         labels:
+          team: platform
           severity: critical
           component: mimir
         annotations:
@@ -201,6 +220,7 @@ groups:
         expr: '(process_resident_memory_bytes{job="mimir"} / 1024 / 1024 / 1024) > 2'
         for: 5m
         labels:
+          team: platform
           severity: warning
           component: mimir
         annotations:
@@ -211,6 +231,7 @@ groups:
         expr: 'rate(process_cpu_seconds_total{job="mimir"}[5m]) > 0.8'
         for: 10m
         labels:
+          team: platform
           severity: warning
           component: mimir
         annotations:
@@ -221,6 +242,7 @@ groups:
         expr: "increase(cortex_compactor_runs_failed_total[1h]) > 0"
         for: 5m
         labels:
+          team: platform
           severity: warning
           component: mimir
         annotations:
@@ -231,6 +253,7 @@ groups:
         expr: 'cortex_ingester_memory_series / cortex_ingester_instance_limits{limit="max_series"} > 0.8'
         for: 5m
         labels:
+          team: platform
           severity: warning
           component: mimir
         annotations:
@@ -243,6 +266,7 @@ groups:
         expr: 'up{job="alertmanager"} == 0'
         for: 1m
         labels:
+          team: platform
           severity: critical
           component: alertmanager
         annotations:
@@ -253,6 +277,7 @@ groups:
         expr: "alertmanager_config_last_reload_successful != 1"
         for: 5m
         labels:
+          team: platform
           severity: warning
           component: alertmanager
         annotations:
@@ -263,6 +288,7 @@ groups:
         expr: "rate(alertmanager_notifications_failed_total[5m]) > 0"
         for: 5m
         labels:
+          team: platform
           severity: critical
           component: alertmanager
         annotations:
@@ -273,6 +299,7 @@ groups:
         expr: "alertmanager_cluster_members < 1"
         for: 5m
         labels:
+          team: platform
           severity: critical
           component: alertmanager
         annotations:
@@ -283,6 +310,7 @@ groups:
         expr: '(process_resident_memory_bytes{job="alertmanager"} / 1024 / 1024) > 200'
         for: 5m
         labels:
+          team: platform
           severity: warning
           component: alertmanager
         annotations:

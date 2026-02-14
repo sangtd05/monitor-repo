@@ -72,7 +72,7 @@ services:
     entrypoint: ["/bin/sh", "-c"]
     command:
       - |
-        sed "s|\$${TELEGRAM_BOT_TOKEN}|${TELEGRAM_BOT_TOKEN}|g; s|\$${TELEGRAM_CHAT_ID}|${TELEGRAM_CHAT_ID}|g" /etc/alertmanager/alertmanager.yml.template > /tmp/alertmanager.yml && \
+        sed "s|\$${TELEGRAM_BOT_TOKEN}|${TELEGRAM_BOT_TOKEN}|g; s|\$${TELEGRAM_SERVICE_CHAT_ID}|${TELEGRAM_SERVICE_CHAT_ID}|g; s|\$${TELEGRAM_PLATFORM_CHAT_ID}|${TELEGRAM_PLATFORM_CHAT_ID}|g" /etc/alertmanager/alertmanager.yml.template > /tmp/alertmanager.yml && \
         /bin/alertmanager \
         --config.file=/tmp/alertmanager.yml \
         --storage.path=/alertmanager \

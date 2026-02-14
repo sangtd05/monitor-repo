@@ -6,6 +6,7 @@ groups:
         expr: probe_success{job="blackbox-http-liveness"} == 0
         for: 2m
         labels:
+          team: service
           severity: critical
           component: blackbox
           alert_type: availability
@@ -18,6 +19,7 @@ groups:
         expr: probe_success{job="blackbox-http-readiness"} == 0
         for: 5m
         labels:
+          team: service
           severity: warning
           component: blackbox
           alert_type: availability
@@ -30,6 +32,7 @@ groups:
         expr: probe_duration_seconds{job=~"blackbox-http-.*"} > 2
         for: 5m
         labels:
+          team: service
           severity: warning
           component: blackbox
           alert_type: performance
@@ -45,6 +48,7 @@ groups:
           )
         for: 5m
         labels:
+          team: service
           severity: warning
           component: blackbox
           alert_type: stability
@@ -60,6 +64,7 @@ groups:
           )
         for: 2m
         labels:
+          team: service
           severity: critical
           component: blackbox
           alert_type: availability
