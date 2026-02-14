@@ -112,7 +112,7 @@ services:
       start_period: 15s
 
   seaweedfs-init:
-    image: amazon/aws-cli:2.22.22
+    image: amazon/aws-cli:2.22.22@sha256:df8f85cdda5cac9aa51ece9604aafd7be0d06074c93997349c8d99152e4fb186
     container_name: seaweedfs-init
     depends_on:
       seaweedfs:
