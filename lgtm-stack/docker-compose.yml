@@ -37,7 +37,7 @@ services:
       - seaweedfs-init
 
   alloy:
-    image: grafana/alloy:1.13.1
+    image: grafana/alloy:1.13.0
     container_name: alloy
     user: root
     command:
