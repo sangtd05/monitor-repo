@@ -8,14 +8,14 @@ jobs:
   validate-docker-compose:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3
       - name: Validate LGTM Stack Docker Compose
         run: docker compose -f lgtm-stack/docker-compose.yml config
 
   validate-loki-config:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3
       - name: Validate Loki Configuration
         run: |
           docker run --rm -v ${{ github.workspace }}/lgtm-stack/loki:/etc/loki \
@@ -24,7 +24,7 @@ jobs:
   validate-tempo-config:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3
       - name: Validate Tempo Configuration
         run: |
           set +e
@@ -50,7 +50,7 @@ jobs:
   validate-mimir-config:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3
       - name: Validate Mimir Configuration
         run: |
           timeout 10s docker run --rm -v ${{ github.workspace }}/lgtm-stack/mimir:/etc/mimir \
@@ -60,7 +60,7 @@ jobs:
   validate-mimir-alert-rules:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3
       - name: Install mimirtool
         run: |
           wget https://github.com/grafana/mimir/releases/latest/download/mimirtool-linux-amd64
@@ -76,7 +76,7 @@ jobs:
   validate-alloy-config:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3
       - name: Validate Alloy Configuration
         run: |
           docker run --rm -v ${{ github.workspace }}/lgtm-stack/alloy:/etc/alloy \
@@ -85,7 +85,7 @@ jobs:
   validate-grafana-dashboards:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3
       - name: Validate Grafana Dashboards JSON
         run: |
           for file in lgtm-stack/grafana/provisioning/dashboards/*.json; do
