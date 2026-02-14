@@ -12,7 +12,7 @@ services:
     networks:
       - monitoring
     depends_on:
-      - minio-init
+      - seaweedfs-init
     deploy:
       resources:
         limits:
@@ -34,7 +34,7 @@ services:
     networks:
       - monitoring
     depends_on:
-      - minio-init
+      - seaweedfs-init
 
   alloy:
     image: grafana/alloy:1.13.1
@@ -87,35 +87,52 @@ services:
       retries: 3
       start_period: 10s
 
-  minio:
-    image: minio/minio:RELEASE.2024-02-14T21-36-02Z@sha256:c2fdee69c06f9825b48b8f300797a9b5e4b80059d385f02ddffd7719f1ffd912
-    container_name: minio
-    command: server /data --console-address ":9001"
+  seaweedfs:
+    image: chrislusf/seaweedfs:3.81
+    container_name: seaweedfs
+    command: "server -s3 -s3.port=9000 -dir=/data -s3.config=/etc/seaweedfs/s3.json"
     environment:
-      - MINIO_ROOT_USER=${MINIO_ROOT_USER:-mimir}
-      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD:-mimir123}
+      - WEED_MASTER_VOLUME_GROWTH_COPY_1=1
     ports:
       - "9000:9000"
-      - "9001:9001"
+      - "9333:9333"
+      - "8080:8080"
     volumes:
-      - minio-data:/data
+      - seaweedfs-data:/data
+      - ./seaweedfs:/etc/seaweedfs
     restart: unless-stopped
     networks:
       - monitoring
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      test:
+        [
+          "CMD",
+          "wget",
+          "--spider",
+          "-q",
+          "http://localhost:9333/cluster/status",
+        ]
       interval: 30s
       timeout: 10s
       retries: 3
 
-  minio-init:
-    image: minio/mc:RELEASE.2024-02-14T13-08-40Z
-    container_name: minio-init
+  seaweedfs-init:
+    image: curlimages/curl:8.11.1
+    container_name: seaweedfs-init
     depends_on:
-      minio:
+      seaweedfs:
         condition: service_healthy
     entrypoint: >
-      /bin/sh -c " /usr/bin/mc alias set myminio http://minio:9000 ${MINIO_ROOT_USER:-mimir} ${MINIO_ROOT_PASSWORD:-mimir123}; /usr/bin/mc mb myminio/mimir-blocks --ignore-existing; /usr/bin/mc mb myminio/mimir-ruler --ignore-existing; /usr/bin/mc mb myminio/mimir-alertmanager --ignore-existing; /usr/bin/mc mb myminio/tempo --ignore-existing; /usr/bin/mc mb myminio/loki --ignore-existing; exit 0; "
+      /bin/sh -c "
+      echo 'Waiting for SeaweedFS S3 to be ready...';
+      sleep 5;
+      for bucket in mimir-blocks mimir-ruler mimir-alertmanager tempo loki; do
+        echo \"Creating bucket: $$bucket\";
+        curl -X PUT http://seaweedfs:9000/$$bucket || true;
+      done;
+      echo 'Buckets created successfully';
+      exit 0;
+      "
     networks:
       - monitoring
 
@@ -129,14 +146,11 @@ services:
       - ./mimir:/etc/mimir
       - ./mimir/rules:/data/mimir/rules
       - mimir-data:/data
-    environment:
-      - MINIO_ROOT_USER=${MINIO_ROOT_USER:-mimir}
-      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD:-mimir123}
     restart: unless-stopped
     networks:
       - monitoring
     depends_on:
-      - minio-init
+      - seaweedfs-init
 
   grafana:
     image: grafana/grafana:12.3.3@sha256:9e1e77ade304069aee3196e9a4f210830e96e80ce9a2640891eccc324b152faf
@@ -213,7 +227,7 @@ volumes:
   grafana-data:
   loki-data:
   tempo-data:
-  minio-data:
+  seaweedfs-data:
   mimir-data:
   alertmanager-data:
   alloy-data:

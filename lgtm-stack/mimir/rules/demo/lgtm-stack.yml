@@ -22,7 +22,7 @@ groups:
           description: "The {{ $labels.job }} and {{ $labels.route }} are experiencing errors\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
 
       - alert: LokiRequestPanic
-        expr: 'sum(increase(loki_panic_total[10m])) by (namespace, job) > 0'
+        expr: "sum(increase(loki_panic_total[10m])) by (namespace, job) > 0"
         for: 5m
         labels:
           severity: critical
@@ -54,7 +54,7 @@ groups:
           description: "Grafana Alloy is down - log and trace collection may be affected\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
 
       - alert: AlloyComponentUnhealthy
-        expr: 'alloy_component_controller_running_components < 1'
+        expr: "alloy_component_controller_running_components < 1"
         for: 2m
         labels:
           severity: warning
@@ -113,38 +113,6 @@ groups:
           summary: "Alloy high CPU usage (instance {{ $labels.instance }})"
           description: "Grafana Alloy CPU usage is above 80%\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
 
-  - name: MinIO
-    rules:
-      - alert: MinioClusterDiskOffline
-        expr: 'minio_cluster_drive_offline_total > 0'
-        for: 0m
-        labels:
-          severity: critical
-          component: minio
-        annotations:
-          summary: "Minio cluster disk offline (instance {{ $labels.instance }})"
-          description: "Minio cluster disk is offline\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
-
-      - alert: MinioNodeDiskOffline
-        expr: 'minio_cluster_nodes_offline_total > 0'
-        for: 0m
-        labels:
-          severity: critical
-          component: minio
-        annotations:
-          summary: "Minio node disk offline (instance {{ $labels.instance }})"
-          description: "Minio cluster node disk is offline\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
-
-      - alert: MinioDiskSpaceUsage
-        expr: 'disk_storage_available / disk_storage_total * 100 < 10'
-        for: 2m
-        labels:
-          severity: warning
-          component: minio
-        annotations:
-          summary: "Minio disk space usage (instance {{ $labels.instance }})"
-          description: "Minio available free space is low (< 10%)\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
-
   - name: Tempo
     rules:
       - alert: TempoDown
@@ -188,7 +156,7 @@ groups:
           description: "Tempo is experiencing 5xx errors on {{ $labels.route }}\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
 
       - alert: TempoIngesterFlushErrors
-        expr: 'increase(tempo_ingester_flush_failed_retries_total[5m]) > 0'
+        expr: "increase(tempo_ingester_flush_failed_retries_total[5m]) > 0"
         for: 5m
         labels:
           severity: warning
@@ -250,7 +218,7 @@ groups:
           description: "Mimir CPU usage is above 80%\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
 
       - alert: MimirCompactorFailed
-        expr: 'increase(cortex_compactor_runs_failed_total[1h]) > 0'
+        expr: "increase(cortex_compactor_runs_failed_total[1h]) > 0"
         for: 5m
         labels:
           severity: warning
@@ -282,7 +250,7 @@ groups:
           description: "Alertmanager is down - alerts won't be sent to Telegram\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
 
       - alert: AlertmanagerConfigReloadFailure
-        expr: 'alertmanager_config_last_reload_successful != 1'
+        expr: "alertmanager_config_last_reload_successful != 1"
         for: 5m
         labels:
           severity: warning
@@ -292,7 +260,7 @@ groups:
           description: "Alertmanager configuration reload failed\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
 
       - alert: AlertmanagerNotificationFailing
-        expr: 'rate(alertmanager_notifications_failed_total[5m]) > 0'
+        expr: "rate(alertmanager_notifications_failed_total[5m]) > 0"
         for: 5m
         labels:
           severity: critical
@@ -302,7 +270,7 @@ groups:
           description: "Alertmanager is failing to send notifications to Telegram\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
 
       - alert: AlertmanagerClusterDown
-        expr: 'alertmanager_cluster_members < 1'
+        expr: "alertmanager_cluster_members < 1"
         for: 5m
         labels:
           severity: critical

@@ -1,0 +1,18 @@
+{
+    "identities": [
+        {
+            "name": "mimir",
+            "credentials": [
+                {
+                    "accessKey": "mimir",
+                    "secretKey": "mimir123"
+                }
+            ],
+            "actions": [
+                "Admin",
+                "Read",
+                "Write"
+            ]
+        }
+    ]
+}
