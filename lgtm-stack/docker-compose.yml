@@ -22,7 +22,7 @@ services:
           memory: 512M
 
   loki:
-    image: grafana/loki:3.0.0@sha256:757b5fadf816a1396f1fea598152947421fa49cb8b2db1ddd2a6e30fae003253
+    image: grafana/loki:3.6.5@sha256:847c287ada0e12603910589f42038c5cdaaad04e248bd1dc6c6e0920a235f427
     container_name: loki
     volumes:
       - ./loki:/etc/loki
