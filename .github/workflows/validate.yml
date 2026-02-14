@@ -1,9 +1,9 @@
-name: CI
+name: Validate
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
 jobs:
   validate-docker-compose:
     runs-on: ubuntu-latest
@@ -32,7 +32,7 @@ jobs:
             grafana/tempo:latest -config.file=/etc/tempo/tempo-config.yml -target=query-frontend 2>&1)
           EXIT_CODE=$?
           set -e
-          
+
           if echo "$OUTPUT" | grep -q "Starting Tempo"; then
             echo "Tempo config is valid (parsed and started successfully)"
             echo "Note: Storage connection error is expected in CI (no MinIO available)"

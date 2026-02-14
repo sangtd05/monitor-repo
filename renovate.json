@@ -5,9 +5,6 @@
         ":enablePreCommit"
     ],
     "timezone": "Asia/Ho_Chi_Minh",
-    "schedule": [
-        "before 10am on monday"
-    ],
     "labels": [
         "dependencies",
         "renovate"
@@ -24,11 +21,15 @@
             "security"
         ]
     },
-    "docker": {
-        "enabled": true,
-        "pinDigests": false
-    },
     "packageRules": [
+        {
+            "description": "Docker category settings",
+            "matchCategories": [
+                "docker"
+            ],
+            "enabled": true,
+            "pinDigests": false
+        },
         {
             "description": "Docker images in lgtm-stack docker-compose",
             "matchDatasources": [
@@ -41,34 +42,25 @@
         },
         {
             "description": "Group Grafana stack updates together",
-            "matchPackagePrefixes": [
-                "grafana/"
+            "matchPackageNames": [
+                "grafana/{/,}**"
             ],
             "groupName": "grafana-stack",
-            "reviewers": [],
-            "schedule": [
-                "before 10am on monday"
-            ]
+            "reviewers": []
         },
         {
             "description": "Group Prometheus exporters together",
-            "matchPackagePrefixes": [
-                "prom/"
+            "matchPackageNames": [
+                "prom/{/,}**"
             ],
-            "groupName": "prometheus-exporters",
-            "schedule": [
-                "before 10am on monday"
-            ]
+            "groupName": "prometheus-exporters"
         },
         {
             "description": "Group MinIO updates together",
-            "matchPackagePrefixes": [
-                "minio/"
+            "matchPackageNames": [
+                "minio/{/,}**"
             ],
-            "groupName": "minio",
-            "schedule": [
-                "before 10am on monday"
-            ]
+            "groupName": "minio"
         },
         {
             "description": "Separate major updates for careful review",

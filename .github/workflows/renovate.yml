@@ -4,10 +4,15 @@ on:
     schedule:
         - cron: "0 2 * * *"
     workflow_dispatch:
+    pull_request:
+        types: [opened]
 
 jobs:
     renovate:
         runs-on: ubuntu-latest
+        permissions:
+            contents: write
+            pull-requests: write
         steps:
             - name: Checkout
               uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
@@ -25,19 +30,17 @@ jobs:
 
     notify:
         runs-on: ubuntu-latest
-        if: always() && needs.renovate.result == 'success'
-        needs: renovate
+        if: github.event_name == 'pull_request' && startsWith(github.head_ref, 'renovate/')
         steps:
             - name: Send Telegram Notification
               uses: appleboy/telegram-action@master
               with:
                   to: ${{ secrets.TELEGRAM_CHAT_ID }}
                   token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-                  format: markdown
                   message: |
-                      📦 *Renovate Scan Completed*
+                      📦 Renovate Update
 
-                      *Repository:* `${{ github.repository }}`
-                      *Trigger:* ${{ github.event_name }}
+                        PR Created: ${{ github.event.pull_request.title }}
+                        repository: ${{ github.repository }}
 
-                      Check [Pull Requests](https://github.com/${{ github.repository }}/pulls?q=is:pr+is:open+author:app/renovate) created by Renovate.
+                        [View PR](${{ github.event.pull_request.html_url }})
