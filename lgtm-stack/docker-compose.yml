@@ -139,7 +139,7 @@ services:
       - minio-init
 
   grafana:
-    image: grafana/grafana:10.3.3@sha256:8640e5038e83ca4554ed56b9d76375158bcd51580238c6f5d8adaf3f20dd5379
+    image: grafana/grafana:10.4.19@sha256:a9043254ba16fb10945cc27333963dfd08eccbb43b51f1222d831cc564e3a1f4
     container_name: grafana
     ports:
       - 3000:3000
