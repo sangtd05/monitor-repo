@@ -2,7 +2,7 @@ name: Renovate
 
 on:
     schedule:
-        - cron: "0 2 * * *"
+        - cron: "0 19 * * *"
     workflow_dispatch:
     pull_request:
         types: [opened]
@@ -10,10 +10,6 @@ on:
 jobs:
     renovate:
         runs-on: ubuntu-latest
-        permissions:
-            contents: write
-            pull-requests: write
-            issues: write
         steps:
             - name: Checkout
               uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
@@ -22,12 +18,10 @@ jobs:
               uses: renovatebot/github-action@44f24283a60f64273f1294932f16ba61193cccca # v46.1.0
               with:
                   configurationFile: renovate.json
-                  token: ${{ secrets.GITHUB_TOKEN }}
+                  token: ${{ secrets.RENOVATE_TOKEN || secrets.GITHUB_TOKEN }}
               env:
-                  LOG_LEVEL: info
+                  LOG_LEVEL: debug
                   RENOVATE_REPOSITORIES: ${{ github.repository }}
-                  RENOVATE_PLATFORM: github
-                  RENOVATE_GIT_AUTHOR: "Renovate Bot <bot@renovateapp.com>"
 
     notify:
         runs-on: ubuntu-latest
@@ -37,11 +31,11 @@ jobs:
               uses: appleboy/telegram-action@master
               with:
                   to: ${{ secrets.TELEGRAM_CHAT_ID }}
-                  token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+                  token: ${{ secrets.TELEGRAM_TOKEN }}
                   message: |
                       📦 Renovate Update
 
-                        PR Created: ${{ github.event.pull_request.title }}
-                        repository: ${{ github.repository }}
+                      PR Created: ${{ github.event.pull_request.title }}
+                      repository: ${{ github.repository }}
 
-                        [View PR](${{ github.event.pull_request.html_url }})
+                      [View PR](${{ github.event.pull_request.html_url }})
