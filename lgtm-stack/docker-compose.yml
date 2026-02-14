@@ -120,7 +120,7 @@ services:
       - monitoring
 
   mimir:
-    image: grafana/mimir:2.11.0
+    image: grafana/mimir:3.0.3@sha256:2d097da545a71ea13c6bf061be4406fa6d4af60335c99cab389a718148ce4b2d
     container_name: mimir
     command:
       - -config.file=/etc/mimir/mimir-config.yml
