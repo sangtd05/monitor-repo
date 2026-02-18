@@ -8,7 +8,17 @@
     "labels": [
         "renovate"
     ],
-    "packageRules": [],
+    "packageRules": [
+        {
+            "matchUpdateTypes": [
+                "minor",
+                "patch"
+            ],
+            "groupName": "minor and patch",
+            "groupSlug": "minor-patch"
+        }
+    ],
     "prHourlyLimit": 0,
-    "prConcurrentLimit": 0
+    "prConcurrentLimit": 0,
+    "prDailyLimit": 2
 }
