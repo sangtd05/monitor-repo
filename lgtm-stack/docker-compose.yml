@@ -22,7 +22,7 @@ services:
           memory: 512M
 
   loki:
-    image: grafana/loki:3.6.5@sha256:847c287ada0e12603910589f42038c5cdaaad04e248bd1dc6c6e0920a235f427
+    image: grafana/loki:3.6.6@sha256:434c7effbd66dbf69c2665fe4b2125549ecf7b45039ac28595d4034031cf47ce
     container_name: loki
     volumes:
       - ./loki:/etc/loki
@@ -112,7 +112,7 @@ services:
       start_period: 15s
 
   seaweedfs-init:
-    image: amazon/aws-cli:2.33.23@sha256:9b06b0d9933fb969438cf68a7d2105870602bf019babc6a5b5bb77486428521e
+    image: amazon/aws-cli:2.33.25@sha256:5b5e45b2dd31d950a08450df8ac276314b8e5104ce86dd415f52ebf40efcf7f0
     container_name: seaweedfs-init
     depends_on:
       seaweedfs:
