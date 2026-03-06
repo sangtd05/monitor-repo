@@ -19,7 +19,7 @@ jobs:
       - name: Validate Loki Configuration
         run: |
           docker run --rm -v ${{ github.workspace }}/lgtm-stack/loki:/etc/loki \
-            grafana/loki:latest -config.file=/etc/loki/loki-config.yml -verify-config
+            grafana/loki:3.6.7 -config.file=/etc/loki/loki-config.yml -verify-config
 
   validate-tempo-config:
     runs-on: ubuntu-latest
@@ -29,7 +29,7 @@ jobs:
         run: |
           set +e
           OUTPUT=$(docker run --rm -v ${{ github.workspace }}/lgtm-stack/tempo:/etc/tempo \
-            grafana/tempo:latest -config.file=/etc/tempo/tempo-config.yml -target=query-frontend 2>&1)
+            grafana/tempo:2.10.1 -config.file=/etc/tempo/tempo-config.yml -target=query-frontend 2>&1)
           EXIT_CODE=$?
           set -e
 
@@ -54,7 +54,7 @@ jobs:
       - name: Validate Mimir Configuration
         run: |
           timeout 10s docker run --rm -v ${{ github.workspace }}/lgtm-stack/mimir:/etc/mimir \
-            grafana/mimir:latest -config.file=/etc/mimir/mimir-config.yml -target=query-frontend || \
+            grafana/mimir:3.0.3 -config.file=/etc/mimir/mimir-config.yml -target=query-frontend || \
           if [ $? -eq 124 ]; then echo "Mimir config is valid"; else exit 1; fi
 
   validate-mimir-alert-rules:
@@ -80,7 +80,7 @@ jobs:
       - name: Validate Alloy Configuration
         run: |
           docker run --rm -v ${{ github.workspace }}/lgtm-stack/alloy:/etc/alloy \
-            grafana/alloy:latest fmt /etc/alloy/config.alloy
+            grafana/alloy:v1.13.2 fmt /etc/alloy/config.alloy
 
   validate-grafana-dashboards:
     runs-on: ubuntu-latest
