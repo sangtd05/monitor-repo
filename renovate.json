@@ -18,5 +18,18 @@
         }
     ],
     "prHourlyLimit": 2,
+    "customManagers": [
+        {
+            "customType": "regex",
+            "fileMatch": [
+                "^\\.github/workflows/validate\\.yml$"
+            ],
+            "matchStrings": [
+                "grafana/(?<depName>[a-zA-Z0-9/_-]+):(?<currentValue>[0-9][a-zA-Z0-9._-]+)"
+            ],
+            "datasourceTemplate": "docker",
+            "depNameTemplate": "grafana/{{{depName}}}"
+        }
+    ],
     "prConcurrentLimit": 2
 }
