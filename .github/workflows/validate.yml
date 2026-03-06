@@ -54,7 +54,7 @@ jobs:
       - name: Validate Mimir Configuration
         run: |
           timeout 10s docker run --rm -v ${{ github.workspace }}/lgtm-stack/mimir:/etc/mimir \
-            grafana/mimir:3.0.3 -config.file=/etc/mimir/mimir-config.yml -target=query-frontend || \
+            grafana/mimir:3.0.3 -config.file=/etc/mimir/mimir-config.yml -target=all || \
           if [ $? -eq 124 ]; then echo "Mimir config is valid"; else exit 1; fi
 
   validate-mimir-alert-rules:
