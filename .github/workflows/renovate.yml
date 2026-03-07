@@ -27,21 +27,12 @@ jobs:
         runs-on: ubuntu-latest
         if: github.event_name == 'pull_request' && startsWith(github.head_ref, 'renovate/')
         steps:
-            - name: Send Telegram Notification
+            - name: Send Slack Notification
               run: |
-                  MESSAGE=$(cat << 'EOF'
-                  <b>[ Renovate Update ]</b>
+                  MESSAGE="*[ Renovate Update ]*\n\n*Repository:* ${{ github.repository }}\n*PR Created:* ${{ github.event.pull_request.title }}\n\n<${{ github.event.pull_request.html_url }}|View PR>"
 
-                  <b>Repository:</b> ${{ github.repository }}
-                  <b>PR Created:</b> ${{ github.event.pull_request.title }}
-
-                  <a href="${{ github.event.pull_request.html_url }}">View PR</a>
-                  EOF
-                  )
-                  curl -s -X POST "https://api.telegram.org/bot$TELEGRAM_TOKEN/sendMessage" \
-                    -d chat_id="$TELEGRAM_CHAT_ID" \
-                    --data-urlencode "text=${MESSAGE}" \
-                    -d parse_mode="HTML"
+                  curl -s -X POST -H 'Content-type: application/json' \
+                    --data "{\"text\": \"$MESSAGE\"}" \
+                    $SLACK_WEBHOOK_URL
               env:
-                  TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
-                  TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+                  SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
