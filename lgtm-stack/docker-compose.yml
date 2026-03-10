@@ -88,7 +88,7 @@ services:
       start_period: 10s
 
   seaweedfs:
-    image: chrislusf/seaweedfs:4.15@sha256:1593bd2a98964f5d4df83fa7db2b3d4ee7b20190813cc5bf8c3200e0e70d346e
+    image: chrislusf/seaweedfs:4.16@sha256:8550d861c9383b5db177f725e58775f036323c4adb2c335a2346dddc7da75e5e
     container_name: seaweedfs
     command: "server -s3 -s3.port=9000 -dir=/data -s3.config=/etc/seaweedfs/s3.json"
     environment:
@@ -112,7 +112,7 @@ services:
       start_period: 15s
 
   seaweedfs-init:
-    image: amazon/aws-cli:2.34.5@sha256:02d0443fb01906f649f8ac8297d61fcef1178c75e4a86f50123266ea0600e3c5
+    image: amazon/aws-cli:2.34.6@sha256:9fa5b5ebad9d20dbecbbffedec16010dbe99102565facf3fd919b1888112135e
     container_name: seaweedfs-init
     depends_on:
       seaweedfs:
