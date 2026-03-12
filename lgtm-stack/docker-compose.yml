@@ -88,7 +88,7 @@ services:
       start_period: 10s
 
   seaweedfs:
-    image: chrislusf/seaweedfs:4.16@sha256:8550d861c9383b5db177f725e58775f036323c4adb2c335a2346dddc7da75e5e
+    image: chrislusf/seaweedfs:4.17@sha256:186de7ef977a20343ee9a5544073f081976a29e2d29ecf8379891e7bf177fbe9
     container_name: seaweedfs
     command: "server -s3 -s3.port=9000 -dir=/data -s3.config=/etc/seaweedfs/s3.json"
     environment:
@@ -112,7 +112,7 @@ services:
       start_period: 15s
 
   seaweedfs-init:
-    image: amazon/aws-cli:2.34.6@sha256:9fa5b5ebad9d20dbecbbffedec16010dbe99102565facf3fd919b1888112135e
+    image: amazon/aws-cli:2.34.7@sha256:9ef589924a9d9df06193db6a57ef88c5ccae1d19a71c6ac545bec3915f34f520
     container_name: seaweedfs-init
     depends_on:
       seaweedfs:
@@ -136,7 +136,7 @@ services:
       - monitoring
 
   mimir:
-    image: grafana/mimir:3.0.3@sha256:2d097da545a71ea13c6bf061be4406fa6d4af60335c99cab389a718148ce4b2d
+    image: grafana/mimir:3.0.4@sha256:686138d9f941508c99c931cc9e69bf9f6100dd4d2d623bf57b38d5c25ee645c1
     container_name: mimir
     command:
       - -config.file=/etc/mimir/mimir-config.yml
