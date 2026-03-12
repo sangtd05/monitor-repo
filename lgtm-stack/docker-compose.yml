@@ -1,6 +1,6 @@
 services:
   tempo:
-    image: grafana/tempo:2.10.1@sha256:9371af1b75b4e057eb77f22dc4dd4d9176cd6985e29f181527be6723b7f29c41
+    image: grafana/tempo:2.10.2@sha256:b6ade23a821c6bdb89487130dee39bd7bf6595e9fc521212ecb7878feb934d72
     container_name: tempo
     command: ["-config.file=/etc/tempo/tempo-config.yml"]
     volumes:
@@ -112,7 +112,7 @@ services:
       start_period: 15s
 
   seaweedfs-init:
-    image: amazon/aws-cli:2.34.7@sha256:9ef589924a9d9df06193db6a57ef88c5ccae1d19a71c6ac545bec3915f34f520
+    image: amazon/aws-cli:2.34.8@sha256:729a53c70a0a12144055dea1255614f117af5e40e8926b68eb1b5cb41069fabc
     container_name: seaweedfs-init
     depends_on:
       seaweedfs:

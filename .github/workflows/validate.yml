@@ -29,7 +29,7 @@ jobs:
         run: |
           set +e
           OUTPUT=$(docker run --rm -v ${{ github.workspace }}/lgtm-stack/tempo:/etc/tempo \
-            grafana/tempo:2.10.1 -config.file=/etc/tempo/tempo-config.yml -target=query-frontend 2>&1)
+            grafana/tempo:2.10.2 -config.file=/etc/tempo/tempo-config.yml -target=query-frontend 2>&1)
           EXIT_CODE=$?
           set -e
 
