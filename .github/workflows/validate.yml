@@ -19,7 +19,7 @@ jobs:
       - name: Validate Loki Configuration
         run: |
           docker run --rm -v ${{ github.workspace }}/lgtm-stack/loki:/etc/loki \
-            grafana/loki:3.6.7 -config.file=/etc/loki/loki-config.yml -verify-config
+            grafana/loki:3.6.7@sha256:3c8fd3570dd9219951a60d3f919c7f31923d10baee578b77bc26c4a0b32d092d -config.file=/etc/loki/loki-config.yml -verify-config
 
   validate-tempo-config:
     runs-on: ubuntu-latest
@@ -29,7 +29,7 @@ jobs:
         run: |
           set +e
           OUTPUT=$(docker run --rm -v ${{ github.workspace }}/lgtm-stack/tempo:/etc/tempo \
-            grafana/tempo:2.10.2 -config.file=/etc/tempo/tempo-config.yml -target=query-frontend 2>&1)
+            grafana/tempo:2.10.2@sha256:b6ade23a821c6bdb89487130dee39bd7bf6595e9fc521212ecb7878feb934d72 -config.file=/etc/tempo/tempo-config.yml -target=query-frontend 2>&1)
           EXIT_CODE=$?
           set -e
 
@@ -54,7 +54,7 @@ jobs:
       - name: Validate Mimir Configuration
         run: |
           timeout 10s docker run --rm -v ${{ github.workspace }}/lgtm-stack/mimir:/etc/mimir \
-            grafana/mimir:3.0.4 -config.file=/etc/mimir/mimir-config.yml -target=all || \
+            grafana/mimir:3.0.4@sha256:686138d9f941508c99c931cc9e69bf9f6100dd4d2d623bf57b38d5c25ee645c1 -config.file=/etc/mimir/mimir-config.yml -target=all || \
           if [ $? -eq 124 ]; then echo "Mimir config is valid"; else exit 1; fi
 
   validate-mimir-alert-rules:
@@ -80,7 +80,7 @@ jobs:
       - name: Validate Alloy Configuration
         run: |
           docker run --rm -v ${{ github.workspace }}/lgtm-stack/alloy:/etc/alloy \
-            grafana/alloy:v1.13.2 fmt /etc/alloy/config.alloy
+            grafana/alloy:v1.14.0@sha256:f50931848bd8178774521767bb46b905e1a081301950ff28d7623c9db7c01076 fmt /etc/alloy/config.alloy
 
   validate-grafana-dashboards:
     runs-on: ubuntu-latest

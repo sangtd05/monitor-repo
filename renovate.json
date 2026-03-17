@@ -25,8 +25,9 @@
                 "/^\\.github/workflows/validate\\.yml$/"
             ],
             "matchStrings": [
-                "grafana/(?<depName>[a-zA-Z0-9/_-]+):(?<currentValue>[0-9][a-zA-Z0-9._-]+)"
+                "grafana/(?<depName>[a-zA-Z0-9/_-]+):(?<currentValue>[v0-9][a-zA-Z0-9._-]+)(?:@(?<currentDigest>sha256:[a-f0-9]+))?"
             ],
+            "autoReplaceStringTemplate": "grafana/{{{depName}}}:{{{newValue}}}{{#if newDigest}}@{{{newDigest}}}{{/if}}",
             "datasourceTemplate": "docker",
             "depNameTemplate": "grafana/{{{depName}}}"
         }
