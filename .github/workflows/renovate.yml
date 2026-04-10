@@ -28,23 +28,25 @@ jobs:
         runs-on: ubuntu-latest
         if: github.event_name == 'pull_request' && startsWith(github.head_ref, 'renovate/')
         steps:
-            - name: Send KChat Notification
+            - name: Send Telegram Notification
               env:
-                  KCHAT_WEBHOOK_URL: ${{ secrets.KCHAT_WEBHOOK_URL }}
+                  TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+                  TELEGRAM_NOTIFICATION_CHAT_ID: ${{ secrets.TELEGRAM_NOTIFICATION_CHAT_ID }}
               run: |
                   MESSAGE=$(cat <<EOF
-                  @channel
+                  [Renovate Update]
 
-                  **[ Renovate Update ]**
+                  Repository: ${{ github.repository }}
+                  PR Created: ${{ github.event.pull_request.title }}
 
-                  **Repository:** ${{ github.repository }}
-                  **PR Created:** ${{ github.event.pull_request.title }}
-
-                  [View PR](${{ github.event.pull_request.html_url }})
+                  View PR: ${{ github.event.pull_request.html_url }}
                   EOF
                   )
 
-                  jq -n --arg text "$MESSAGE" '{text: $text}' | \
+                  jq -nc \
+                    --arg chat_id "$TELEGRAM_NOTIFICATION_CHAT_ID" \
+                    --arg text "$MESSAGE" \
+                    '{chat_id: $chat_id, text: $text, disable_web_page_preview: true}' | \
                     curl -fsS -X POST -H 'Content-Type: application/json' \
                     --data @- \
-                    "$KCHAT_WEBHOOK_URL"
+                    "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage"
