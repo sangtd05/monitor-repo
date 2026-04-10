@@ -30,8 +30,8 @@ jobs:
         steps:
             - name: Send Telegram Notification
               env:
-                  TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-                  TELEGRAM_NOTIFICATION_CHAT_ID: ${{ secrets.TELEGRAM_NOTIFICATION_CHAT_ID }}
+                  TELEGRAM_NOTIFICATION_BOT_TOKEN: ${{ secrets.TELEGRAM_NOTIFICATION_BOT_TOKEN }}
+                  TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
               run: |
                   MESSAGE=$(cat <<EOF
                   [Renovate Update]
@@ -44,9 +44,9 @@ jobs:
                   )
 
                   jq -nc \
-                    --arg chat_id "$TELEGRAM_NOTIFICATION_CHAT_ID" \
+                    --arg chat_id "$TELEGRAM_CHAT_ID" \
                     --arg text "$MESSAGE" \
                     '{chat_id: $chat_id, text: $text, disable_web_page_preview: true}' | \
                     curl -fsS -X POST -H 'Content-Type: application/json' \
                     --data @- \
-                    "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage"
+                    "https://api.telegram.org/bot${TELEGRAM_NOTIFICATION_BOT_TOKEN}/sendMessage"
